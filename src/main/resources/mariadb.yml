@@ -1,0 +1,13 @@
+mariadb:
+  enable: false
+  user: user
+  password: passwd
+  ip: 127.0.0.1
+  port: 3306
+  database: database
+
+hikaricp:
+  pool-size: 100
+
+delay:
+  table-creation: 60
