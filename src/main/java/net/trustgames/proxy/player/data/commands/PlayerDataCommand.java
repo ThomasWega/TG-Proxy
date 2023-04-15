@@ -1,157 +1,188 @@
 package net.trustgames.proxy.player.data.commands;
 
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.tree.ArgumentCommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
-import com.velocitypowered.api.command.*;
-import com.velocitypowered.api.proxy.ConsoleCommandSource;
+import cloud.commandframework.ArgumentDescription;
+import cloud.commandframework.Command;
+import cloud.commandframework.arguments.CommandArgument;
+import cloud.commandframework.arguments.flags.CommandFlag;
+import cloud.commandframework.arguments.standard.EnumArgument;
+import cloud.commandframework.arguments.standard.IntegerArgument;
+import cloud.commandframework.arguments.standard.StringArgument;
+import cloud.commandframework.meta.CommandMeta;
+import cloud.commandframework.velocity.VelocityCommandManager;
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.trustgames.middleware.Middleware;
 import net.trustgames.middleware.cache.PlayerDataCache;
 import net.trustgames.middleware.cache.UUIDCache;
-import net.trustgames.middleware.config.RabbitQueues;
+import net.trustgames.middleware.config.CommandConfig;
 import net.trustgames.middleware.database.player.data.PlayerData;
 import net.trustgames.middleware.database.player.data.config.PlayerDataConfig;
 import net.trustgames.middleware.database.player.data.config.PlayerDataType;
-import net.trustgames.middleware.managers.RabbitManager;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.proxy.config.ProxyPermissionConfig;
-import net.trustgames.proxy.utils.ComponentUtils;
-import org.jetbrains.annotations.NotNull;
-import org.json.JSONObject;
 
-public final class PlayerDataCommand {
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+public class PlayerDataCommand {
 
     private final Middleware middleware;
+    private final ProxyServer server;
+    private final VelocityCommandManager<CommandSource> commandManager;
 
     public PlayerDataCommand(Proxy proxy) {
         this.middleware = proxy.getMiddleware();
-        ProxyServer server = proxy.getServer();
+        this.commandManager = proxy.getCommandManager();
+        this.server = proxy.getServer();
 
-        CommandManager commandManager = server.getCommandManager();
-        BrigadierCommand dataCommand = dataCommand(server);
-        CommandMeta dataCommandMeta = commandManager.metaBuilder(dataCommand)
-                .plugin(this)
-                .aliases("deaths", "games", "playtime", "xp", "level", "gems", "rubies")
+        // don't include NAME and UUID
+        List<PlayerDataType> dataTypesFiltered = Arrays.stream(PlayerDataType.values())
+                .filter(dataType -> dataType != PlayerDataType.NAME && dataType != PlayerDataType.UUID)
+                .toList();
+
+        // create a get and admin command for each datatype
+        for (PlayerDataType dataType : dataTypesFiltered) {
+            getDataCommand(dataType);
+            adminDataCommand(dataType);
+        }
+    }
+
+    /**
+     * Command to check the value of each player data (gems, kills, deaths etc.).
+     * Can check personal or target's value.
+     *
+     * @param dataType The type of data to create the command for
+     */
+    private void getDataCommand(PlayerDataType dataType) {
+
+        // COMMAND
+        String label = dataType.name().toLowerCase();
+        Command.Builder<CommandSource> command = commandManager.commandBuilder(
+                label,
+                CommandMeta.simple().with(CommandMeta.DESCRIPTION,
+                        "Check the number of " + label + " a player has. " +
+                                "If no target is specified, it returns your own balance")
+                        .build()
+        );
+
+        // TARGET argument
+        CommandArgument<CommandSource, String> targetArg = StringArgument.<CommandSource>builder("target")
+                .withSuggestionsProvider((context, s) -> server.getAllPlayers().stream()
+                        .map(Player::getUsername)
+                        .toList())
+                .asOptional()
                 .build();
-        commandManager.register(dataCommandMeta, dataCommand);
+
+        // REGISTER
+        commandManager.command(command
+                .argument(targetArg)
+                .handler(context -> {
+                    CommandSource source = context.getSender();
+                    Optional<String> targetOpt = context.getOptional("target");
+                    targetOpt.ifPresentOrElse(target ->
+                                    target(source, target, dataType),
+                            () -> self(source, dataType));
+                }));
     }
 
-    private BrigadierCommand dataCommand(final ProxyServer server) {
+    /**
+     * Command for staff to modify the value of each player data (gems, kills, deaths etc.).
+     * Console is allowed
+     *
+     * @param dataType The type of data to create the command for
+     */
+    public void adminDataCommand(PlayerDataType dataType) {
 
-        // MAIN COMMAND
-        LiteralCommandNode<CommandSource> dataNode = LiteralArgumentBuilder.<CommandSource>literal("kills")
-                .executes(context -> {
-                    CommandSource source = context.getSource();
-                    String label = context.getInput().split(" ")[0];
-                    PlayerDataType dataType = PlayerDataType.valueOf(label.toUpperCase());
+        // COMMAND
+        String label = dataType.name().toLowerCase();
+        Command.Builder<CommandSource> adminCommand = commandManager.commandBuilder(
+                 label + "admin",
+                CommandMeta.simple().with(CommandMeta.DESCRIPTION, "Manage the amount of " + label + " a player has." +
+                                "Available actions are set/add/remove. " +
+                                "Can also use flag \"--silent\" to prevent notifying the player of any changes made.")
+                        .build()
+        );
 
-                    self(source, dataType);
-                    return Command.SINGLE_SUCCESS;
-                }).build();
+        // TARGET argument
+        CommandArgument<CommandSource, String> targetArg = StringArgument.<CommandSource>builder("target")
+                .withSuggestionsProvider((context, s) -> server.getAllPlayers().stream()
+                        .map(Player::getUsername)
+                        .toList())
+                .asRequired()
+                .build();
 
-        // TARGET ARGUMENT
-        ArgumentCommandNode<CommandSource, String> targetNode = RequiredArgumentBuilder.<CommandSource, String>argument("target", StringArgumentType.word())
-                .suggests((context, builder) -> {
-                    server.getAllPlayers().forEach(player -> builder.suggest(player.getUsername(), VelocityBrigadierMessage.tooltip(Component.text("ADD"))));
-                    return builder.buildFuture();
-                })
-                .executes(context -> {
-                    CommandSource source = context.getSource();
-                    String targetName = context.getArgument("target", String.class);
-                    String label = context.getInput().split(" ")[0];
-                    PlayerDataType dataType = PlayerDataType.valueOf(label.toUpperCase());
+        // ACTION argument
+        CommandArgument<CommandSource, ActionType> actionArg = EnumArgument.of(ActionType.class, "action");
 
-                    target(source, targetName, dataType);
-                    return Command.SINGLE_SUCCESS;
+        // VALUE argument
+        CommandArgument<CommandSource, Integer> valueArg = IntegerArgument.<CommandSource>builder("value")
+                .withMin(0)
+                .withSuggestionsProvider(((commandSourceCommandContext, s) ->
+                        Arrays.asList("0", "1", "5", "10", "25", "50", "100", "500", "1000",
+                                "5000", "10000", "25000", "50000", "75000", "100000")))
+                .build();
 
-                }).build();
+        // REGISTER
+        commandManager.command(adminCommand
+                .permission(ProxyPermissionConfig.STAFF.permission)
+                .argument(targetArg)
+                .argument(actionArg)
+                .argument(valueArg)
+                .flag(CommandFlag.builder("silent")
+                        .withDescription(ArgumentDescription.of(
+                                "Whether the target player should be notified" +
+                                        "of the modifications or not"
+                        )))
+                .handler((context -> {
+                    CommandSource source = context.getSender();
+                    String target = context.get("target");
+                    ActionType action = context.get("action");
+                    int value = context.get("value");
+                    boolean silent = context.flags().isPresent("silent");
 
-
-        // ACTION ARGUMENT - WITH PERMISSION (incomplete command)
-        ArgumentCommandNode<CommandSource, String> actionNode = RequiredArgumentBuilder.<CommandSource, String>argument("action", StringArgumentType.word())
-                                .requires(source -> source.hasPermission(ProxyPermissionConfig.STAFF.permission))
-                                .suggests(((context, builder) -> {
-                                    builder.suggest("add", VelocityBrigadierMessage.tooltip(Component.text("ADD")));
-                                    builder.suggest("remove", VelocityBrigadierMessage.tooltip(Component.text("ADD")));
-                                    builder.suggest("set", VelocityBrigadierMessage.tooltip(Component.text("ADD")));
-                                    return builder.buildFuture();
-                                }))
-                                .executes((context -> {
-                                    CommandSource source = context.getSource();
-                                    source.sendMessage(Component.text("ADD (missing value) -- /" + context.getInput() + " <value>"));
-
-                                    return Command.SINGLE_SUCCESS;
-                                })).build();
-
-        // VALUE ARGUMENT
-        ArgumentCommandNode<CommandSource, Integer> valueNode = RequiredArgumentBuilder.<CommandSource, Integer>
-                        argument("value", IntegerArgumentType.integer(0))
-                                        .suggests(((context, builder) -> {
-                                            int[] values = {0, 1, 5, 10, 25, 50, 100, 500, 1000, 5000, 10000, 25000, 50000, 75000, 100000};
-                                            for (int value : values) {
-                                                builder.suggest(value, VelocityBrigadierMessage.tooltip(Component.text("ADD")));
-                                            }
-                                            return builder.buildFuture();
-                                        }))
-                                        .executes((context -> {
-                                            CommandSource source = context.getSource();
-                                            String targetName = context.getArgument("target", String.class);
-                                            String label = context.getInput().split(" ")[0];
-                                            String action = context.getArgument("action", String.class);
-
-                                            PlayerDataType dataType = PlayerDataType.valueOf(label.toUpperCase());
-                                            ActionType actionType = ActionType.valueOf(action.toUpperCase());
-                                            int value = context.getArgument("value", Integer.class);
-
-
-                                            modify(source, targetName, dataType, actionType, value);
-
-                                            return Command.SINGLE_SUCCESS;
-                                        })).build();
-
-        // connect all of these in one command
-        dataNode.addChild(targetNode);
-        targetNode.addChild(actionNode);
-        actionNode.addChild(valueNode);
-
-        return new BrigadierCommand(dataNode);
+                    admin(source, target, dataType, action, value, silent);
+                }))
+        );
     }
 
+    /**
+     * Gets the data value for the command sender and prints it for him.
+     * Handles if the sender is not player, as console doesn't have any data.
+     * Also handles if there is no data (although that shouldn't happen)
+     *
+     * @param source   Sender of the command
+     * @param dataType Type of data to get
+     */
     private void self(CommandSource source,
                       PlayerDataType dataType) {
-        if (source instanceof ConsoleCommandSource) {
-            //  sender.sendMessage(CommandConfig.COMMAND_PLAYER_ONLY.getText());
-            System.out.println("1");
+        if (!(source instanceof Player sender)) {
+            source.sendMessage(CommandConfig.COMMAND_PLAYER_ONLY.getText());
             return;
         }
-        Player sender = ((Player) source);
         String senderName = sender.getUsername();
         UUIDCache uuidCache = new UUIDCache(middleware, senderName);
         uuidCache.get(uuid -> {
-                /*
-                 will most likely mean that console executed this command
-                 and console can't have uuid
-                */
             if (uuid == null) {
-                //   sender.sendMessage(CommandConfig.COMMAND_PLAYER_ONLY.getText());
-                System.out.println("2");
+                sender.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(senderName)));
                 return;
             }
             PlayerDataCache dataCache = new PlayerDataCache(middleware, uuid, dataType);
-            dataCache.get(data -> {
-                //  sender.sendMessage(PlayerDataConfig.GET_PERSONAL.formatMessage(senderName, dataType, String.valueOf(data)));
-                System.out.println("3");
-            });
+            dataCache.get(data ->
+                    sender.sendMessage(PlayerDataConfig.GET_PERSONAL.formatMessage(senderName, dataType, String.valueOf(data))));
         });
     }
 
+    /**
+     * Gets the data value for the supplied target and prints it for the command sender.
+     * Handles if there is no data
+     *
+     * @param source     Sender of the command
+     * @param targetName Name of the target player whom data to get
+     * @param dataType   Type of data to get
+     */
     private void target(CommandSource source,
                         String targetName,
                         PlayerDataType dataType) {
@@ -161,34 +192,43 @@ public final class PlayerDataCommand {
                 PlayerDataCache dataCache = new PlayerDataCache(middleware, targetUuid, dataType);
                 dataCache.get(data -> {
                     if (data != null) {
-                        //    sender.sendMessage(PlayerDataConfig.GET_OTHER.formatMessage(targetName, dataType, data));
-                        System.out.println("4");
+                        source.sendMessage(PlayerDataConfig.GET_OTHER.formatMessage(targetName, dataType, data));
                     } else {
-                        //    sender.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
-                        System.out.println("5");
+                        source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
                     }
                 });
             } else {
-                //  sender.sendMessage(CommandConfig.COMMAND_PLAYER_UNKNOWN.addComponent(Component.text(targetName)));
-                System.out.println("6");
+                source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
             }
         });
     }
 
-    private void modify(CommandSource source,
-                        String targetName,
-                        PlayerDataType dataType,
-                        ActionType actionType,
-                        int value) {
+    /**
+     * Modify the data value for the supplied target and prints it for the command sender.
+     * Also sends a message to the target (if online), that his data was modified.
+     * If the data is modified from console, the source will be "CONSOLE"
+     * Handles if there is no data yet for the player (unknown player).
+     *
+     * @param source Sender of the command
+     * @param targetName Name of the player whom data to modify
+     * @param dataType Type of the data to modify
+     * @param actionType Which action to do with the data (remove, set, ...)
+     * @param value Which value to modify it with
+     */
+    private void admin(CommandSource source,
+                       String targetName,
+                       PlayerDataType dataType,
+                       ActionType actionType,
+                       int value,
+                       boolean silent) {
         UUIDCache uuidCache = new UUIDCache(middleware, targetName);
         uuidCache.get(targetUuid -> {
             if (targetUuid == null) {
-             //   source.sendMessage(CommandConfig.COMMAND_PLAYER_UNKNOWN.addComponent(Component.text(targetName)));
-                System.out.println("7");
+                source.sendMessage(CommandConfig.COMMAND_PLAYER_UNKNOWN.addComponent(Component.text(targetName)));
                 return;
             }
 
-            String sourceName = (source instanceof Player player) 
+            String sourceName = (source instanceof Player player)
                     ? player.getUsername() : "CONSOLE";
 
             PlayerData playerData = new PlayerData(middleware, targetUuid, dataType);
@@ -196,50 +236,32 @@ public final class PlayerDataCommand {
                 case SET -> {
                     playerData.setData(value);
                     source.sendMessage(PlayerDataConfig.SET_SENDER.formatMessage(targetName, dataType, String.valueOf(value)));
-                    handleMessageQueue(source, targetName,
-                            PlayerDataConfig.SET_TARGET.formatMessage(
-                                    sourceName, dataType, String.valueOf(value)));
+                    if (!silent) {
+                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(
+                                PlayerDataConfig.SET_TARGET.formatMessage(
+                                        sourceName, dataType, String.valueOf(value))));
+                    }
                 }
                 case ADD -> {
                     playerData.addData(value);
                     source.sendMessage(PlayerDataConfig.ADD_SENDER.formatMessage(targetName, dataType, String.valueOf(value)));
-                    handleMessageQueue(source, targetName,
-                            PlayerDataConfig.ADD_TARGET.formatMessage(
-                                    sourceName, dataType, String.valueOf(value)));
+                    if (!silent) {
+                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(
+                                PlayerDataConfig.ADD_TARGET.formatMessage(
+                                        sourceName, dataType, String.valueOf(value))));
+                    }
                 }
                 case REMOVE -> {
                     playerData.removeData(value);
                     source.sendMessage(PlayerDataConfig.REMOVE_SENDER.formatMessage(targetName, dataType, String.valueOf(value)));
-                    handleMessageQueue(source, targetName,
-                            PlayerDataConfig.REMOVE_TARGET.formatMessage(
-                                    sourceName, dataType, String.valueOf(value)));
+                    if (!silent) {
+                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(
+                                PlayerDataConfig.REMOVE_TARGET.formatMessage(
+                                        sourceName, dataType, String.valueOf(value))));
+                    }
                 }
             }
         });
-    }
-
-    /**
-     * When the RabbitMQ is disabled, the sender will be notified
-     * that a message to target won't be sent.
-     * If RabbitMQ is enabled, a message to RabbitMQ is sent
-     *
-     * @param source Sender of the command
-     * @param targetName Name of the target
-     * @param message Message to send to the target
-     */
-    private void handleMessageQueue(@NotNull CommandSource source,
-                                    @NotNull String targetName,
-                                    @NotNull Component message) {
-        RabbitManager rabbitManager = middleware.getRabbitManager();
-        if (rabbitManager == null) {
-          //  source.sendMessage(CommandConfig.COMMAND_MESSAGE_QUEUE_OFF.getText().append(Component.text(" Not sending a message to target player").color(NamedTextColor.DARK_GRAY)));
-            System.out.println("8");
-        } else {
-            JSONObject json = new JSONObject();
-            json.put("player", targetName);
-            json.put("message", ComponentUtils.toJson(message));
-            rabbitManager.send(RabbitQueues.PROXY_PLAYER_MESSAGES.name, json);
-        }
     }
 
     private enum ActionType {

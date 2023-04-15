@@ -18,7 +18,6 @@ import net.trustgames.middleware.managers.RabbitManager;
 import net.trustgames.proxy.managers.ConfigManager;
 import net.trustgames.proxy.player.data.PlayerDataHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataCommand;
-import net.trustgames.proxy.player.data.commands.PlayerDataCommandTest;
 import net.trustgames.proxy.tablist.TablistHandler;
 import ninja.leaping.configurate.ConfigurationNode;
 import org.slf4j.Logger;
@@ -45,9 +44,10 @@ public class Proxy {
     private final Logger logger;
     @Getter
     private final ProxyServer server;
-
     @Getter
     private final Middleware middleware = new Middleware();
+    @Getter
+    private VelocityCommandManager<CommandSource> commandManager;
 
     private final File dataFolder;
 
@@ -65,6 +65,7 @@ public class Proxy {
         initializeRabbit();
 
         // TEST add the player to database on join
+        // TODO custom messages for cloud
 
         registerCommands();
         registerEvents();
@@ -81,10 +82,7 @@ public class Proxy {
     }
 
     private void registerCommands(){
-        // commands
-        new PlayerDataCommand(this);
-
-        VelocityCommandManager<CommandSource> manager = new VelocityCommandManager<>(
+        commandManager = new VelocityCommandManager<>(
                 server.getPluginManager().ensurePluginContainer(this),
                 server,
                 CommandExecutionCoordinator.simpleCoordinator(),
@@ -92,8 +90,8 @@ public class Proxy {
                 Function.identity()
         );
 
-        manager.brigadierManager().setNativeNumberSuggestions(false);
-        new PlayerDataCommandTest(manager, server);
+        commandManager.brigadierManager().setNativeNumberSuggestions(false);
+        new PlayerDataCommand(this);
     }
 
     private void registerEvents(){

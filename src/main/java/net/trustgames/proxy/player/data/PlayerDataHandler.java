@@ -9,7 +9,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.trustgames.middleware.Middleware;
 import net.trustgames.middleware.cache.RedisCache;
-import net.trustgames.middleware.config.RabbitQueues;
+import net.trustgames.middleware.config.rabbit.RabbitQueues;
 import net.trustgames.middleware.database.player.data.uuid.PlayerUUIDFetcher;
 import net.trustgames.middleware.managers.RabbitManager;
 import net.trustgames.proxy.Proxy;
