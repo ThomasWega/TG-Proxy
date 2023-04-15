@@ -1,0 +1,6 @@
+redis:
+  enable: false
+  user: default
+  password: 1234
+  ip: 127.0.0.1
+  port: 6379
