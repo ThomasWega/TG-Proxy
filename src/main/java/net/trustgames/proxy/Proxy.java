@@ -1,6 +1,9 @@
 package net.trustgames.proxy;
 
+import cloud.commandframework.execution.CommandExecutionCoordinator;
+import cloud.commandframework.velocity.VelocityCommandManager;
 import com.google.inject.Inject;
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -9,24 +12,23 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.trustgames.database.HikariManager;
-import net.trustgames.database.RabbitManager;
-import net.trustgames.proxy.cache.CacheHandler;
-import net.trustgames.proxy.config.Config;
+import net.trustgames.middleware.Middleware;
+import net.trustgames.middleware.managers.HikariManager;
+import net.trustgames.middleware.managers.RabbitManager;
+import net.trustgames.proxy.managers.ConfigManager;
+import net.trustgames.proxy.player.data.PlayerDataHandler;
+import net.trustgames.proxy.player.data.commands.PlayerDataCommand;
+import net.trustgames.proxy.player.data.commands.PlayerDataCommandTest;
 import net.trustgames.proxy.tablist.TablistHandler;
 import ninja.leaping.configurate.ConfigurationNode;
 import org.slf4j.Logger;
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Objects;
+import java.util.function.Function;
 
 
 @Plugin(
@@ -43,12 +45,10 @@ public class Proxy {
     private final Logger logger;
     @Getter
     private final ProxyServer server;
+
     @Getter
-    private HikariManager hikariManager;
-    @Getter
-    private RabbitManager rabbitManager;
-    @Getter
-    public static JedisPool jedisPool;
+    private final Middleware middleware = new Middleware();
+
     private final File dataFolder;
 
     @Inject
@@ -60,65 +60,106 @@ public class Proxy {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        initializeRabbit();
         initializeHikari();
-        jedisPool = new JedisPool(new JedisPoolConfig(), "localhost", 6379);
+        initializeRedis();
+        initializeRabbit();
 
-        // TODO fix shading
-        // TODO add config for rabbitmq
+        // TEST add the player to database on join
 
-        EventManager eventManager = server.getEventManager();
-        eventManager.register(this, new CacheHandler(this));
-        eventManager.register(this, new TablistHandler());
-
-        // TODO move this
-        server.getScheduler().buildTask(this, () -> {
-            try {
-                rabbitManager.onDelivery(json -> {
-                    String playerName = json.getString("player");
-                    Component message = GsonComponentSerializer.gson().deserialize(json.getString("message"));
-                    server.getPlayer(playerName).ifPresent(player -> player.sendMessage(message));
-                });
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }).delay(Duration.ofSeconds(2)).schedule();
+        registerCommands();
+        registerEvents();
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
-        jedisPool.close();
+        if (middleware.getJedisPool() != null) {
+            middleware.getJedisPool().close();
+        }
+        if (middleware.getRabbitManager() != null) {
+            middleware.getRabbitManager().close();
+        }
+    }
+
+    private void registerCommands(){
+        // commands
+        new PlayerDataCommand(this);
+
+        VelocityCommandManager<CommandSource> manager = new VelocityCommandManager<>(
+                server.getPluginManager().ensurePluginContainer(this),
+                server,
+                CommandExecutionCoordinator.simpleCoordinator(),
+                Function.identity(),
+                Function.identity()
+        );
+
+        manager.brigadierManager().setNativeNumberSuggestions(false);
+        new PlayerDataCommandTest(manager, server);
+    }
+
+    private void registerEvents(){
+        EventManager eventManager = server.getEventManager();
+        eventManager.register(this, new TablistHandler());
+        eventManager.register(this, new PlayerDataHandler(this));
+    }
+
+    private void initializeHikari(){
         try {
-            rabbitManager.close();
+            ConfigurationNode hikariConfig = ConfigManager.loadConfig(dataFolder, "mariadb.yml");
+
+            if (!hikariConfig.getNode("mariadb", "enable").getBoolean()) {
+                logger.warn("HikariCP is disabled");
+                return;
+            }
+
+            middleware.setHikariManager(new HikariManager(
+                    Objects.requireNonNull(hikariConfig.getNode("mariadb", "user").getString()),
+                    Objects.requireNonNull(hikariConfig.getNode("mariadb", "password").getString()),
+                    Objects.requireNonNull(hikariConfig.getNode("mariadb", "ip").getString()),
+                    Objects.requireNonNull(hikariConfig.getNode("mariadb", "port").getString()),
+                    Objects.requireNonNull(hikariConfig.getNode("mariadb", "database").getString()),
+                    hikariConfig.getNode("hikaricp", "pool-size").getInt()
+            ));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @SneakyThrows
-    private void initializeHikari(){
+    private void initializeRabbit(){
+        try {
+            ConfigurationNode rabbitConfig = ConfigManager.loadConfig(dataFolder, "rabbitmq.yml");
 
-        ConfigurationNode config = Config.loadConfig(dataFolder, "mariadb.yml");
+            if (!rabbitConfig.getNode("rabbitmq", "enable").getBoolean()) {
+                logger.warn("RabbitMQ is disabled");
+                return;
+            }
 
-        hikariManager = new HikariManager(
-                Objects.requireNonNull(config.getNode("mariadb", "user").getString()),
-                Objects.requireNonNull(config.getNode("mariadb", "password").getString()),
-                Objects.requireNonNull(config.getNode("mariadb", "ip").getString()),
-                Objects.requireNonNull(config.getNode("mariadb", "port").getString()),
-                Objects.requireNonNull(config.getNode("mariadb", "database").getString()),
-                config.getNode("hikaricp", "pool-size").getInt(),
-                !config.getNode("mariadb", "enable").getBoolean()
-        );
+            middleware.setRabbitManager(new RabbitManager(
+                    Objects.requireNonNull(rabbitConfig.getNode("rabbitmq", "user").getString()),
+                    Objects.requireNonNull(rabbitConfig.getNode("rabbitmq", "password").getString()),
+                    Objects.requireNonNull(rabbitConfig.getNode("rabbitmq", "ip").getString()),
+                    rabbitConfig.getNode("rabbitmq", "port").getInt())
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void initializeRabbit(){
-        rabbitManager = new RabbitManager(
-                "guest",
-                "guest",
-                "localhost",
-                5672,
-                "proxy",
-                false
-        );
+    private void initializeRedis() {
+        try {
+            ConfigurationNode redisConfig = ConfigManager.loadConfig(dataFolder, "redis.yml");
+            if (!redisConfig.getNode("redis", "enable").getBoolean()) {
+                logger.warn("Redis is disabled");
+                return;
+            }
+
+            middleware.setJedisPool(new JedisPool(
+                    redisConfig.getNode("redis", "ip").getString(),
+                    redisConfig.getNode("redis", "port").getInt(),
+                    redisConfig.getNode("redis", "user").getString(),
+                    redisConfig.getNode("redis", "password").getString()
+            ));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

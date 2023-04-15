@@ -1,4 +1,4 @@
-package net.trustgames.proxy.config;
+package net.trustgames.proxy.managers;
 
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public interface Config {
+public interface ConfigManager {
 
     static ConfigurationNode loadConfig(final File dir, String configName) throws IOException {
         loadFiles(dir, configName);
@@ -26,7 +26,7 @@ public interface Config {
             //noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
 
-            try (var stream = Config.class.getClassLoader().getResourceAsStream(configName)) {
+            try (var stream = ConfigManager.class.getClassLoader().getResourceAsStream(configName)) {
                 Files.copy(Objects.requireNonNull(stream), configPath);
             }
         }

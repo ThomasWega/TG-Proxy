@@ -13,7 +13,7 @@
 
     <description>Proxy plugin for TrustGames.net</description>
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <url>www.trustgames.net</url>
@@ -26,7 +26,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.0</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -39,7 +39,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.2.0</version>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -52,7 +52,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -137,7 +137,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -145,13 +145,26 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <relocations>
-                                <relocation>
-                                    <pattern>redis.clients.jedis</pattern>
-                                    <shadedPattern>net.trustgames.proxy.internal.jedis
-                                    </shadedPattern>
-                                </relocation>
-                            </relocations>
+                            <transformers>
+                                <!-- Add a transformer to exclude any other manifest files (possibly from dependencies). -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resources>
+                                        <resource>MANIFEST.MF</resource>
+                                        <resource>META-INF/LICENSE.txt</resource>
+                                        <resource>META-INF/LICENSE</resource>
+                                        <resource>META-INF/AL2.0</resource>
+                                        <resource>META-INF/LGPL2.1</resource>
+                                    </resources>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>**/module-info.*</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
@@ -164,7 +177,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.5.0</version>
             </plugin>
         </plugins>
     </reporting>
@@ -189,27 +202,14 @@
         </dependency>
         <dependency>
             <groupId>com.github.ThomasWega</groupId>
-            <artifactId>TG-DATABASE</artifactId>
-            <version>9312ce9</version>
+            <artifactId>TG-Toolkit</artifactId>
+            <version>4a8fc51c</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>com.rabbitmq</groupId>
-            <artifactId>amqp-client</artifactId>
-            <version>5.17.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.26</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>4.3.1</version>
-            <type>jar</type>
-            <scope>compile</scope>
+            <groupId>cloud.commandframework</groupId>
+            <artifactId>cloud-velocity</artifactId>
+            <version>1.8.3</version>
         </dependency>
     </dependencies>
 </project>
