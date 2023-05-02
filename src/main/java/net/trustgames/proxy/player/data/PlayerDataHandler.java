@@ -31,6 +31,7 @@ public class PlayerDataHandler {
     @Subscribe
     private void onPlayerJoin(LoginEvent event) {
         Player player = event.getPlayer();
+        // TODO rather replace
         uuidFetcher.setIfNotExists(player.getUsername(), player.getUniqueId());
     }
 

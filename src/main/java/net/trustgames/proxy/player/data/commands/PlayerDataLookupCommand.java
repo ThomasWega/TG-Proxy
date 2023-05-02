@@ -56,7 +56,6 @@ public class PlayerDataLookupCommand {
     /**
      * Gets the data value for the command sender and prints it for him.
      * Handles if the sender is not player, as console doesn't have any data.
-     * Also handles if there is no data (although that shouldn't happen)
      *
      * @param dataType Type of data to get
      */
@@ -69,16 +68,10 @@ public class PlayerDataLookupCommand {
                 .handler(context -> {
                     Player player = ((Player) context.getSender());
                     String senderName = player.getUsername();
-                    UUIDCache uuidCache = new UUIDCache(toolkit, senderName);
-                    uuidCache.get(uuid -> {
-                        if (uuid.isEmpty()) {
-                            player.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(senderName)));
-                            return;
-                        }
-                        PlayerDataCache dataCache = new PlayerDataCache(toolkit, uuid.get(), dataType);
-                        dataCache.get(optData -> optData.ifPresent(data ->
-                                player.sendMessage(PlayerDataConfig.GET_PERSONAL.formatMessage(senderName, dataType, data))));
-                    });
+
+                    PlayerDataCache dataCache = new PlayerDataCache(toolkit, player.getUniqueId(), dataType);
+                    dataCache.get(optData -> optData.ifPresent(data ->
+                            player.sendMessage(PlayerDataConfig.GET_PERSONAL.formatMessage(senderName, dataType, data))));
                 }));
     }
 
