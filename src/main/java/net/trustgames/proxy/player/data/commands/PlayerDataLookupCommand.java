@@ -76,8 +76,8 @@ public class PlayerDataLookupCommand {
                             return;
                         }
                         PlayerDataCache dataCache = new PlayerDataCache(toolkit, uuid.get(), dataType);
-                        dataCache.get(data ->
-                                player.sendMessage(PlayerDataConfig.GET_PERSONAL.formatMessage(senderName, dataType, String.valueOf(data))));
+                        dataCache.get(optData -> optData.ifPresent(data ->
+                                player.sendMessage(PlayerDataConfig.GET_PERSONAL.formatMessage(senderName, dataType, data))));
                     });
                 }));
     }
