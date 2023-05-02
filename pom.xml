@@ -203,13 +203,19 @@
         <dependency>
             <groupId>com.github.ThomasWega</groupId>
             <artifactId>TG-Toolkit</artifactId>
-            <version>6dc87755</version>
+            <version>3cbdb833</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>cloud.commandframework</groupId>
             <artifactId>cloud-velocity</artifactId>
             <version>1.8.3</version>
+        </dependency>
+        <dependency>
+            <groupId>net.luckperms</groupId>
+            <artifactId>api</artifactId>
+            <version>5.4</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

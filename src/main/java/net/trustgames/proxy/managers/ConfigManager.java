@@ -9,17 +9,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public interface ConfigManager {
+public class ConfigManager {
 
-    static ConfigurationNode loadConfig(final File dir, String configName) throws IOException {
-        loadFiles(dir, configName);
-        final YAMLConfigurationLoader loader = YAMLConfigurationLoader.builder()
-                .setPath(dir.toPath().resolve(configName))
-                .build();
+    /**
+     * Loads the file from the paths
+     *
+     * @param dir        Directory in which the desired file is
+     * @param configName Name of the desired file
+     * @return new ConfigurationNode
+     */
+    public static ConfigurationNode loadConfig(final File dir, String configName) {
+        try {
+            loadFiles(dir, configName);
+            final YAMLConfigurationLoader loader = YAMLConfigurationLoader.builder()
+                    .setPath(dir.toPath().resolve(configName))
+                    .build();
 
-        return loader.load();
+            return loader.load();
+        } catch (IOException e) {
+            throw new RuntimeException("Trying to load files", e);
+        }
     }
 
+    /**
+     * Creates the new file (if not exists)
+     * with the default contents of the same file in resources
+     *
+     * @param dir        Directory where to save the desired file
+     * @param configName Name of the file
+     * @throws IOException Trying to get the default content from resources
+     */
     private static void loadFiles(File dir, String configName) throws IOException {
         Path configPath = dir.toPath().resolve(configName);
         if (!Files.exists(configPath)) {
