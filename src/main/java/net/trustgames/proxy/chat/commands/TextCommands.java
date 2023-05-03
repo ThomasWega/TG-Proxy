@@ -37,7 +37,7 @@ public final class TextCommands {
         commandManager.command(textCommand
                 .handler(context -> {
                     CommandSource source = context.getSender();
-                    source.sendMessage(command.getMessage());
+                    source.sendMessage(command.getFormatted());
                 })
         );
     }

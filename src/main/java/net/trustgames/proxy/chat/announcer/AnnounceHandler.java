@@ -37,7 +37,7 @@ public final class AnnounceHandler {
             if (index[0] == msgList.length) {
                 index[0] = 0;
             }
-            server.getAllPlayers().forEach(player -> player.sendMessage(msgList[index[0]].getMessage()));
+            server.getAllPlayers().forEach(player -> player.sendMessage(msgList[index[0]].getFormatted()));
             index[0]++;
         }).repeat(Duration.ofMinutes(5)).schedule();
     }

@@ -26,7 +26,7 @@ public enum TextCommandsList {
     /**
      * @return Formatted component message
      */
-    public final Component getMessage() {
+    public final Component getFormatted() {
         return MiniMessage.miniMessage().deserialize(message);
     }
 }

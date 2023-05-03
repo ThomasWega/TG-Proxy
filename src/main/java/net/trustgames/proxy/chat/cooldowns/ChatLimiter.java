@@ -25,7 +25,7 @@ public final class ChatLimiter {
     @Subscribe(order = PostOrder.FIRST)
     public void limit(PlayerChatEvent event) {
         Player player = event.getPlayer();
-        if (player.hasPermission(PermissionConfig.STAFF.permission)) return;
+        if (player.hasPermission(PermissionConfig.STAFF.getPermission())) return;
         UUID uuid = player.getUniqueId();
 
         // add the player if not yet contained with new cooldown

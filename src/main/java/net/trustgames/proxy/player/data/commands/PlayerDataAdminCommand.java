@@ -91,7 +91,7 @@ public class PlayerDataAdminCommand {
 
         // REGISTER
         commandManager.command(adminCommand
-                .permission(PermissionConfig.STAFF.permission)
+                .permission(PermissionConfig.STAFF.getPermission())
                 .argument(targetArg)
                 .argument(actionArg)
                 .argument(valueArg)

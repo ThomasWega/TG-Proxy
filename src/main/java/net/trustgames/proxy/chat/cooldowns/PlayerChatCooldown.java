@@ -20,8 +20,8 @@ public class PlayerChatCooldown {
      */
     PlayerChatCooldown(Player player) {
         ChatLimitConfig group = getGroup(player);
-        this.cooldown = group.chatLimitSec;
-        this.sameCooldown = group.chatLimitSameSec;
+        this.cooldown = group.getChatLimitSec();
+        this.sameCooldown = group.getChatLimitSameSec();
     }
 
     /**
