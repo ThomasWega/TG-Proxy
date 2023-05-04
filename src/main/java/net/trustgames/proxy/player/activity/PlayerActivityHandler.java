@@ -7,6 +7,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.toolkit.database.player.activity.PlayerActivity;
 import net.trustgames.toolkit.database.player.activity.PlayerActivityFetcher;
+import net.trustgames.toolkit.database.player.activity.config.PlayerActivityType;
 
 import java.net.InetSocketAddress;
 import java.sql.Timestamp;
@@ -22,12 +23,12 @@ public class PlayerActivityHandler {
 
     @Subscribe
     private void onPlayerJoin(LoginEvent event) {
-        insertNewAction(event.getPlayer(), "JOIN NETWORK");
+        insertNewAction(event.getPlayer(), PlayerActivityType.JOIN.getAction());
     }
 
     @Subscribe
     private void onPlayerQuit(DisconnectEvent event) {
-        insertNewAction(event.getPlayer(), "LEAVE NETWORK");
+        insertNewAction(event.getPlayer(), PlayerActivityType.LEAVE.getAction());
 
     }
 
