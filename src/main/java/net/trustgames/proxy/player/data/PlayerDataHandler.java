@@ -5,6 +5,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.sound.Sound;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.cache.RedisCache;
@@ -31,18 +32,22 @@ public class PlayerDataHandler {
     @Subscribe
     private void onPlayerJoin(LoginEvent event) {
         Player player = event.getPlayer();
-        // TODO rather replace
-        uuidFetcher.setIfNotExists(player.getUsername(), player.getUniqueId());
+        uuidFetcher.updateName(player.getUniqueId(), player.getUsername());
     }
 
     @Subscribe
     private void onPlayerLeave(DisconnectEvent event) {
+        System.out.println(System.currentTimeMillis());
+        System.out.println("\033[0;35m" + "PROXY - JEDIS ERROR 1");
         Player player = event.getPlayer();
         String playerName = player.getUsername();
         UUID uuid = player.getUniqueId();
-        server.getScheduler().buildTask(proxy, () -> {
+        // TODO UNCOMMENT
+     /*   server.getScheduler().buildTask(proxy, () -> {
             redisCache.removeKey(uuid.toString());
             redisCache.removeKey(playerName);
         }).delay(Duration.ofSeconds(2L)).schedule();
+
+      */
     }
 }

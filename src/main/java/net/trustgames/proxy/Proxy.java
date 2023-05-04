@@ -16,6 +16,7 @@ import net.trustgames.proxy.chat.announcer.AnnounceHandler;
 import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.managers.ConfigManager;
+import net.trustgames.proxy.player.activity.PlayerActivityHandler;
 import net.trustgames.proxy.player.data.PlayerDataHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataAdminCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
@@ -73,7 +74,9 @@ public class Proxy {
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
+        System.out.println("BEFORE CLOSE");
         toolkit.closeConnections();
+        System.out.println("AFTER CLOSE");
     }
 
     private void registerCommands() {
@@ -92,6 +95,7 @@ public class Proxy {
     }
 
     private void registerEvents() {
+        new PlayerActivityHandler(this);
         EventManager eventManager = server.getEventManager();
         eventManager.register(this, new TablistHandler());
         eventManager.register(this, new PlayerDataHandler(this));
