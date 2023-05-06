@@ -14,34 +14,31 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.trustgames.proxy.Proxy;
+import net.trustgames.proxy.player.data.commands.config.PlayerDataCommandsMessagesConfig;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.cache.UUIDCache;
 import net.trustgames.toolkit.config.CommandConfig;
 import net.trustgames.toolkit.config.PermissionConfig;
 import net.trustgames.toolkit.database.player.data.PlayerData;
-import net.trustgames.toolkit.database.player.data.config.PlayerDataConfig;
 import net.trustgames.toolkit.database.player.data.config.PlayerDataType;
 
 import java.util.Arrays;
-import java.util.List;
 
-public class PlayerDataAdminCommand {
+public class PlayerDataModifyCommand {
 
     private final VelocityCommandManager<CommandSource> commandManager;
     private final ProxyServer server;
     private final Toolkit toolkit;
 
-    public PlayerDataAdminCommand(Proxy proxy) {
+    public PlayerDataModifyCommand(Proxy proxy) {
         this.commandManager = proxy.getCommandManager();
         this.server = proxy.getServer();
         this.toolkit = proxy.getToolkit();
 
         // don't include NAME and UUID
-        List<PlayerDataType> dataTypesFiltered = Arrays.stream(PlayerDataType.values())
+        Arrays.stream(PlayerDataType.values())
                 .filter(dataType -> dataType != PlayerDataType.NAME && dataType != PlayerDataType.UUID)
-                .toList();
-
-        dataTypesFiltered.forEach(this::register);
+                .forEach(this::register);
     }
 
     /**
@@ -103,7 +100,7 @@ public class PlayerDataAdminCommand {
                     int value = context.get(valueArg);
                     boolean silent = context.flags().isPresent(silentFlag);
 
-                    admin(source, target, dataType, action, value, silent);
+                    modify(source, target, dataType, action, value, silent);
                 }))
         );
     }
@@ -120,12 +117,12 @@ public class PlayerDataAdminCommand {
      * @param actionType Which action to do with the data (remove, set, ...)
      * @param value      Which value to modify it with
      */
-    private void admin(CommandSource source,
-                       String targetName,
-                       PlayerDataType dataType,
-                       ActionType actionType,
-                       int value,
-                       boolean silent) {
+    private void modify(CommandSource source,
+                        String targetName,
+                        PlayerDataType dataType,
+                        ActionType actionType,
+                        int value,
+                        boolean silent) {
         UUIDCache uuidCache = new UUIDCache(toolkit, targetName);
         uuidCache.get(targetUuid -> {
             if (targetUuid.isEmpty()) {
@@ -140,31 +137,50 @@ public class PlayerDataAdminCommand {
             switch (actionType) {
                 case SET -> {
                     playerData.setData(value);
-                    source.sendMessage(PlayerDataConfig.SET_SENDER.formatMessage(targetName, dataType, String.valueOf(value)));
                     if (!silent) {
-                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(
-                                PlayerDataConfig.SET_TARGET.formatMessage(
-                                        sourceName, dataType, String.valueOf(value))));
+                        PlayerDataCommandsMessagesConfig.Modify.Target.SET.formatMessage(
+                                toolkit, sourceName, value, dataType, componentMessage -> {
+                                    if (componentMessage.isEmpty()) return;
+                                    server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
+                                }
+                        );
                     }
+                    PlayerDataCommandsMessagesConfig.Modify.Sender.SET.formatMessage(
+                            toolkit, targetName, value, dataType, componentMessage -> {
+                                if (componentMessage.isEmpty()) return;
+                                source.sendMessage(componentMessage.get());
+                    });
                 }
                 case ADD -> {
                     playerData.addData(value);
-                    source.sendMessage(PlayerDataConfig.ADD_SENDER.formatMessage(targetName, dataType, String.valueOf(value)));
                     if (!silent) {
-                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(
-                                PlayerDataConfig.ADD_TARGET.formatMessage(
-                                        sourceName, dataType, String.valueOf(value))));
+                        PlayerDataCommandsMessagesConfig.Modify.Target.ADD.formatMessage(
+                                toolkit, sourceName, value, dataType, componentMessage -> {
+                                    if (componentMessage.isEmpty()) return;
+                                    server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
+                                }
+                        );
                     }
-                }
+                    PlayerDataCommandsMessagesConfig.Modify.Sender.ADD.formatMessage(
+                            toolkit, targetName, value, dataType, componentMessage -> {
+                                if (componentMessage.isEmpty()) return;
+                                source.sendMessage(componentMessage.get());
+                            });                }
                 case REMOVE -> {
                     playerData.removeData(value);
-                    source.sendMessage(PlayerDataConfig.REMOVE_SENDER.formatMessage(targetName, dataType, String.valueOf(value)));
                     if (!silent) {
-                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(
-                                PlayerDataConfig.REMOVE_TARGET.formatMessage(
-                                        sourceName, dataType, String.valueOf(value))));
+                        PlayerDataCommandsMessagesConfig.Modify.Target.REMOVE.formatMessage(
+                                toolkit, sourceName, value, dataType, componentMessage -> {
+                                    if (componentMessage.isEmpty()) return;
+                                    server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
+                                }
+                        );
                     }
-                }
+                    PlayerDataCommandsMessagesConfig.Modify.Sender.REMOVE.formatMessage(
+                            toolkit, targetName, value, dataType, componentMessage -> {
+                                if (componentMessage.isEmpty()) return;
+                                source.sendMessage(componentMessage.get());
+                            });                }
             }
         });
     }

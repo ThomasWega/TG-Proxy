@@ -20,9 +20,10 @@ import net.trustgames.proxy.player.activity.PlayerActivityHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataRemoveHandler;
-import net.trustgames.proxy.player.data.commands.PlayerDataAdminCommand;
+import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
 import net.trustgames.proxy.tablist.TablistHandler;
+import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.managers.HikariManager;
 import net.trustgames.toolkit.managers.rabbit.RabbitManager;
@@ -69,6 +70,7 @@ public class Proxy {
         initializeRedis();
         initializeRabbit();
 
+        PlaceholderUtils.initialize();
         registerCommands();
         registerEvents();
         new AnnounceHandler(this);
@@ -76,6 +78,7 @@ public class Proxy {
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
+        System.out.println(event.toString());
         System.out.println("BEFORE CLOSE");
         toolkit.closeConnections();
         System.out.println("AFTER CLOSE");
@@ -92,7 +95,7 @@ public class Proxy {
 
         commandManager.brigadierManager().setNativeNumberSuggestions(false);
         new PlayerDataLookupCommand(this);
-        new PlayerDataAdminCommand(this);
+        new PlayerDataModifyCommand(this);
         new TextCommands(commandManager);
     }
 

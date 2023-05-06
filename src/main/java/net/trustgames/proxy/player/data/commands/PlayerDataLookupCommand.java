@@ -10,16 +10,16 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kyori.adventure.text.Component;
 import net.trustgames.proxy.Proxy;
+import net.trustgames.proxy.player.data.commands.config.PlayerDataCommandsMessagesConfig;
 import net.trustgames.toolkit.Toolkit;
-import net.trustgames.toolkit.cache.PlayerDataCache;
 import net.trustgames.toolkit.cache.UUIDCache;
 import net.trustgames.toolkit.config.CommandConfig;
-import net.trustgames.toolkit.database.player.data.config.PlayerDataConfig;
+import net.trustgames.toolkit.database.player.data.PlayerData;
 import net.trustgames.toolkit.database.player.data.config.PlayerDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Objects;
 
 public class PlayerDataLookupCommand {
 
@@ -33,11 +33,9 @@ public class PlayerDataLookupCommand {
         this.server = proxy.getServer();
 
         // don't include NAME and UUID
-        List<PlayerDataType> dataTypesFiltered = Arrays.stream(PlayerDataType.values())
+        Arrays.stream(PlayerDataType.values())
                 .filter(dataType -> dataType != PlayerDataType.NAME && dataType != PlayerDataType.UUID)
-                .toList();
-
-        dataTypesFiltered.forEach(dataType -> {
+                .forEach(dataType -> {
 
             // MAIN COMMAND
             String label = dataType.name().toLowerCase();
@@ -67,11 +65,19 @@ public class PlayerDataLookupCommand {
                 .senderType(Player.class)
                 .handler(context -> {
                     Player player = ((Player) context.getSender());
-                    String senderName = player.getUsername();
 
-                    PlayerDataCache dataCache = new PlayerDataCache(toolkit, player.getUniqueId(), dataType);
-                    dataCache.get(optData -> optData.ifPresent(data ->
-                            player.sendMessage(PlayerDataConfig.GET_PERSONAL.formatMessage(senderName, dataType, data))));
+                    PlayerDataType finalType = dataType;
+                    if (dataType == PlayerDataType.LEVEL){
+                        finalType = PlayerDataType.XP;
+                    }
+                    new PlayerData(toolkit, player.getUniqueId(), finalType).getData(optData -> {
+                        if (optData.isEmpty()) {
+                            player.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(player.getUsername())));
+                            return;
+                        }
+
+                        player.sendMessage(Objects.requireNonNull(PlayerDataCommandsMessagesConfig.Personal.getByDataType(dataType)).formatMessage(optData.get()));
+                    });
                 }));
     }
 
@@ -105,13 +111,17 @@ public class PlayerDataLookupCommand {
                             source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
                             return;
                         }
-                        PlayerDataCache dataCache = new PlayerDataCache(toolkit, targetUuid.get(), dataType);
-                        dataCache.get(data -> {
-                            if (data.isEmpty()) {
+                        PlayerDataType finalType = dataType;
+                        if (dataType == PlayerDataType.LEVEL){
+                            finalType = PlayerDataType.XP;
+                        }
+                        new PlayerData(toolkit, targetUuid.get(), finalType).getData(optData -> {
+                            if (optData.isEmpty()) {
                                 source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
                                 return;
                             }
-                            source.sendMessage(PlayerDataConfig.GET_OTHER.formatMessage(targetName, dataType, data.get()));
+
+                            source.sendMessage(Objects.requireNonNull(PlayerDataCommandsMessagesConfig.Target.getByDataType(dataType)).formatMessage(targetName, optData.get()));
                         });
                     });
                 }));
