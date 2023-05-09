@@ -12,9 +12,8 @@ import net.kyori.adventure.text.Component;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.proxy.player.data.commands.config.PlayerDataCommandsMessagesConfig;
 import net.trustgames.toolkit.Toolkit;
-import net.trustgames.toolkit.cache.UUIDCache;
 import net.trustgames.toolkit.config.CommandConfig;
-import net.trustgames.toolkit.database.player.data.PlayerData;
+import net.trustgames.toolkit.database.player.data.PlayerDataFetcher;
 import net.trustgames.toolkit.database.player.data.config.PlayerDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,17 +65,16 @@ public class PlayerDataLookupCommand {
                 .handler(context -> {
                     Player player = ((Player) context.getSender());
 
-                    PlayerDataType finalType = dataType;
-                    if (dataType == PlayerDataType.LEVEL){
-                        finalType = PlayerDataType.XP;
-                    }
-                    new PlayerData(toolkit, player.getUniqueId(), finalType).getData(optData -> {
+                    System.out.println("HEMEME");
+                    new PlayerDataFetcher(toolkit).resolveDataAsync(player.getUniqueId(), dataType).thenAccept(optData -> {
+                        System.out.println("LOL - " + optData);
                         if (optData.isEmpty()) {
                             player.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(player.getUsername())));
                             return;
                         }
 
-                        player.sendMessage(Objects.requireNonNull(PlayerDataCommandsMessagesConfig.Personal.getByDataType(dataType)).formatMessage(optData.get()));
+                        System.out.println("OBJC - " + optData.get());
+                        player.sendMessage(Objects.requireNonNull(PlayerDataCommandsMessagesConfig.Personal.getByDataType(dataType)).formatMessage(player, Integer.parseInt(optData.get().toString())));
                     });
                 }));
     }
@@ -105,25 +103,18 @@ public class PlayerDataLookupCommand {
                     CommandSource source = context.getSender();
                     String targetName = context.get(targetArg);
 
-                    UUIDCache uuidCache = new UUIDCache(toolkit, targetName);
-                    uuidCache.get(targetUuid -> {
-                        if (targetUuid.isEmpty()) {
-                            source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
-                            return;
-                        }
-                        PlayerDataType finalType = dataType;
-                        if (dataType == PlayerDataType.LEVEL){
-                            finalType = PlayerDataType.XP;
-                        }
-                        new PlayerData(toolkit, targetUuid.get(), finalType).getData(optData -> {
+                    System.out.println("SO LIKE HUUUH???");
+                    PlayerDataFetcher dataFetcher = new PlayerDataFetcher(toolkit);
+                    System.out.println("BEFORE ALL");
+                    dataFetcher.resolveDataAsync(targetName, dataType).thenAccept(optData -> {
+                            System.out.println("OPTIK DATA - " + optData);
                             if (optData.isEmpty()) {
                                 source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
                                 return;
                             }
 
-                            source.sendMessage(Objects.requireNonNull(PlayerDataCommandsMessagesConfig.Target.getByDataType(dataType)).formatMessage(targetName, optData.get()));
+                            source.sendMessage(Objects.requireNonNull(PlayerDataCommandsMessagesConfig.Target.getByDataType(dataType)).formatMessage(toolkit, targetName, Integer.parseInt(optData.get().toString())));
                         });
-                    });
-                }));
+                    }));
     }
 }

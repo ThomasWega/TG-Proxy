@@ -1,15 +1,18 @@
 package net.trustgames.proxy.player.data.commands.config;
 
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
+import io.github.miniplaceholders.api.MiniPlaceholders;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.trustgames.toolkit.Toolkit;
-import net.trustgames.toolkit.database.player.data.PlayerData;
+import net.trustgames.toolkit.database.player.data.PlayerDataFetcher;
 import net.trustgames.toolkit.database.player.data.config.PlayerDataType;
-import net.trustgames.toolkit.database.player.data.uuid.PlayerUUIDFetcher;
 import net.trustgames.toolkit.utils.LevelUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -17,7 +20,7 @@ import java.util.function.Consumer;
 
 public enum PlayerDataCommandsMessagesConfig {
     PREFIX("<color:#3498db>Economy | </color>");
-    
+
     @Getter
     private final String stringPrefix;
 
@@ -28,10 +31,10 @@ public enum PlayerDataCommandsMessagesConfig {
     public enum Personal {
         KILLS(PREFIX.stringPrefix + "<dark_gray>You have <yellow><value> kills", PlayerDataType.KILLS),
         DEATHS(PREFIX.stringPrefix + "<dark_gray>You've <yellow>died <value> times", PlayerDataType.DEATHS),
-        GAMES(PREFIX.stringPrefix + "<dark_gray>You've <yellow>played <value> games<dark_gray> in total", PlayerDataType.GAMES),
+        GAMES(PREFIX.stringPrefix + "<dark_gray>You've <yellow>played <value> games<dark_gray> in total", PlayerDataType.GAMES_PLAYED),
         PLAYTIME(PREFIX.stringPrefix + "<dark_gray>You've played for <yellow><value> hours<dark_gray> in total", PlayerDataType.PLAYTIME),
         XP(PREFIX.stringPrefix + "<dark_gray>You have <yellow><value> xp", PlayerDataType.XP),
-        LEVEL(PREFIX.stringPrefix + "<dark_gray>You are at <yellow>level <value><dark_gray>. Progress till next level: <yellow><level_progress>%", PlayerDataType.LEVEL),
+        LEVEL(PREFIX.stringPrefix + "<dark_gray>You are at <yellow>level <value><dark_gray>. Progress till next level: <yellow><tg_player_level_progress>%", PlayerDataType.LEVEL),
         GEMS(PREFIX.stringPrefix + "<dark_gray>You have <yellow><value> gems", PlayerDataType.GEMS),
         RUBIES(PREFIX.stringPrefix + "<dark_gray>You have <yellow><value> rubies", PlayerDataType.RUBIES);
 
@@ -44,42 +47,38 @@ public enum PlayerDataCommandsMessagesConfig {
             this.dataType = dataType;
         }
 
-        public Component formatMessage(int value) {
-            TagResolver.Builder builder = TagResolver.builder();
+        public static PlayerDataCommandsMessagesConfig.Personal getByDataType(PlayerDataType dataType) {
+            for (Personal config : values()) {
+                if (config.getDataType() == dataType) {
+                    System.out.println("OKA GOOD");
+                    return config;
+                }
+            }
+            System.out.println("BAD :(");
+            return null;
+        }
 
+        public Component formatMessage(@NotNull Player sender, int value) {
+            System.out.println("SENDER - " + value);
+            System.out.println("SO WTF?");
             // convert seconds to hours
             if (dataType == PlayerDataType.PLAYTIME) {
                 value = ((value / 60) / 60);
             }
+            TagResolver tags = TagResolver.builder()
+                    .resolver(MiniPlaceholders.getAudiencePlaceholders(sender))
+                    .resolver(Placeholder.unparsed("value", String.valueOf(value)))
+                    .build();
 
-            if (dataType == PlayerDataType.LEVEL){
-                builder.resolver(Placeholder.unparsed("level_progress",
-                        String.format("%.1f", LevelUtils.getProgress(value) * 100)));
-                builder.resolver(Placeholder.unparsed("value",
-                        String.valueOf(LevelUtils.getLevelByXp(value))));
-            } else {
-                builder.resolver(Placeholder.unparsed("value", String.valueOf(value)));
-            }
-
-            return MiniMessage.miniMessage().deserialize(
-              message, builder.build()
-            );
-        }
-
-        public static PlayerDataCommandsMessagesConfig.Personal getByDataType(PlayerDataType dataType) {
-            for (Personal config : values()) {
-                if (config.getDataType() == dataType) {
-                    return config;
-                }
-            }
-            return null;
+            System.out.println("BUILD HIH3");
+            return MiniMessage.miniMessage().deserialize(message, tags);
         }
     }
 
     public enum Target {
         KILLS(PREFIX.stringPrefix + "<dark_gray>Player <white><target_name> <dark_gray>has <yellow><value> kills", PlayerDataType.KILLS),
         DEATHS(PREFIX.stringPrefix + "<dark_gray>Player <white><target_name> <dark_gray>has <yellow>died <value> times", PlayerDataType.DEATHS),
-        GAMES(PREFIX.stringPrefix + "<dark_gray>Player <white><target_name> <dark_gray>has played <yellow><value> games<dark_gray> in total", PlayerDataType.GAMES),
+        GAMES(PREFIX.stringPrefix + "<dark_gray>Player <white><target_name> <dark_gray>has played <yellow><value> games<dark_gray> in total", PlayerDataType.GAMES_PLAYED),
         PLAYTIME(PREFIX.stringPrefix + "<dark_gray>Player <white><target_name> <dark_gray>has played for <yellow><value> hours<dark_gray> in total", PlayerDataType.PLAYTIME),
         XP(PREFIX.stringPrefix + "<dark_gray>Player <white><target_name> <dark_gray>has <yellow><value> xp", PlayerDataType.XP),
         LEVEL(PREFIX.stringPrefix + "<dark_gray>Player <white><target_name> <dark_gray>is at <yellow>level <value><dark_gray>. Their progress till next level: <yellow><level_progress>%", PlayerDataType.LEVEL),
@@ -104,17 +103,18 @@ public enum PlayerDataCommandsMessagesConfig {
             return null;
         }
 
-        public Component formatMessage(String targetName, int value) {
+        public Component formatMessage(@NotNull Toolkit toolkit,
+                                       @NotNull String targetName, int value) {
+            System.out.println("TARGET - " + value);
             TagResolver.Builder builder = TagResolver.builder()
-                    .resolver(Placeholder.unparsed("target_name", targetName));
+                    .resolver(Placeholder.unparsed("target_name", targetName))
+                    .resolver(Placeholder.unparsed("value", String.valueOf(value)));
 
-            if (dataType == PlayerDataType.LEVEL){
+
+            if (dataType == PlayerDataType.LEVEL) {
+                int xp = new PlayerDataFetcher(toolkit).resolveIntData(targetName, PlayerDataType.XP).orElse(0);
                 builder.resolver(Placeholder.unparsed("level_progress",
-                        String.format("%.1f", LevelUtils.getProgress(value) * 100)));
-                builder.resolver(Placeholder.unparsed("value",
-                        String.valueOf(LevelUtils.getLevelByXp(value))));
-            } else {
-                builder.resolver(Placeholder.unparsed("value", String.valueOf(value)));
+                        String.format("%.1f", LevelUtils.getProgress(xp) * 100)));
             }
 
             return MiniMessage.miniMessage().deserialize(
@@ -135,30 +135,37 @@ public enum PlayerDataCommandsMessagesConfig {
                 this.message = message;
             }
 
-            public void formatMessage(Toolkit toolkit, String targetName, int value, PlayerDataType dataType, Consumer<Optional<Component>> callback) {
+            public void formatMessage(@NotNull Toolkit toolkit,
+                                      @NotNull String targetName,
+                                      int value,
+                                      @NotNull ModifyAction modifyAction,
+                                      @NotNull PlayerDataType dataType,
+                                      Consumer<Optional<Component>> callback) {
                 int[] valueArr = {value};
-                new PlayerUUIDFetcher(toolkit).fetch(targetName, optUuid -> {
-                    if (optUuid.isEmpty()){
+                PlayerDataFetcher dataFetcher = new PlayerDataFetcher(toolkit);
+                dataFetcher.resolveIntDataAsync(targetName, dataType).thenAccept(optCurrentBalance -> {
+                    if (optCurrentBalance.isEmpty()) {
                         callback.accept(Optional.empty());
                         return;
                     }
-                    optUuid.ifPresent(uuid -> new PlayerData(toolkit, uuid, dataType).getData(optCurrentBalance -> {
-                        if (optCurrentBalance.isEmpty()){
-                            callback.accept(Optional.empty());
-                            return;
-                        }
-                        // convert seconds to hours
-                        if (dataType == PlayerDataType.PLAYTIME) {
-                            valueArr[0] = ((valueArr[0] / 60) / 60);
-                        }
+                    // convert seconds to hours
+                    if (dataType == PlayerDataType.PLAYTIME) {
+                        valueArr[0] = ((valueArr[0] / 60) / 60);
+                    }
 
-                        TagResolver.Builder builder = TagResolver.builder()
-                                .resolver(Placeholder.unparsed("value", String.valueOf(valueArr[0])))
-                                .resolver(Placeholder.unparsed("target_name", targetName))
-                                .resolver(Placeholder.unparsed("data_type", Objects.requireNonNull(DataTypeDisplay.getDisplayNameByDataType(dataType))))
-                                .resolver(Placeholder.unparsed("current_balance", String.valueOf(optCurrentBalance.get())));
-                        callback.accept(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
-                    }));
+                    int currentBalance = optCurrentBalance.getAsInt();
+                    if (modifyAction == ModifyAction.ADD){
+                        currentBalance += value;
+                    } else if (modifyAction == ModifyAction.REMOVE) {
+                        currentBalance -= value;
+                    }
+
+                    TagResolver.Builder builder = TagResolver.builder()
+                            .resolver(Placeholder.unparsed("value", String.valueOf(valueArr[0])))
+                            .resolver(Placeholder.unparsed("target_name", targetName))
+                            .resolver(Placeholder.unparsed("data_type", Objects.requireNonNull(DataTypeDisplay.getDisplayNameByDataType(dataType))))
+                            .resolver(Placeholder.unparsed("current_balance", String.valueOf(currentBalance)));
+                    callback.accept(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
                 });
             }
         }
@@ -174,38 +181,49 @@ public enum PlayerDataCommandsMessagesConfig {
                 this.message = message;
             }
 
-            public void formatMessage(Toolkit toolkit, String sourceName, int value, PlayerDataType dataType, Consumer<Optional<Component>> callback) {
+            public void formatMessage(@NotNull Toolkit toolkit,
+                                      @NotNull CommandSource source,
+                                      @NotNull String targetName,
+                                      int value,
+                                      @NotNull ModifyAction modifyAction,
+                                      @NotNull PlayerDataType dataType,
+                                      Consumer<Optional<Component>> callback) {
                 int[] valueArr = {value};
-                new PlayerUUIDFetcher(toolkit).fetch(sourceName, optUuid -> {
-                    if (optUuid.isEmpty()){
-                        callback.accept(Optional.empty());
-                        return;
-                    }
-                    optUuid.ifPresent(uuid -> new PlayerData(toolkit, uuid, dataType).getData(optCurrentBalance -> {
-                        if (optCurrentBalance.isEmpty()){
-                            callback.accept(Optional.empty());
-                            return;
-                        }
-                        // convert seconds to hours
-                        if (dataType == PlayerDataType.PLAYTIME) {
-                            valueArr[0] = ((valueArr[0] / 60) / 60);
-                        }
+                new PlayerDataFetcher(toolkit).resolveIntDataAsync(targetName, dataType)
+                        .thenAccept(optCurrentBalance -> {
+                            if (optCurrentBalance.isEmpty()) {
+                                callback.accept(Optional.empty());
+                                return;
+                            }
+                            // convert seconds to hours
+                            if (dataType == PlayerDataType.PLAYTIME) {
+                                valueArr[0] = ((valueArr[0] / 60) / 60);
+                            }
 
-                        TagResolver.Builder builder = TagResolver.builder()
-                                .resolver(Placeholder.unparsed("value", String.valueOf(valueArr[0])))
-                                .resolver(Placeholder.unparsed("source_name", sourceName))
-                                .resolver(Placeholder.unparsed("data_type", Objects.requireNonNull(DataTypeDisplay.getDisplayNameByDataType(dataType))))
-                                .resolver(Placeholder.unparsed("current_balance", String.valueOf(optCurrentBalance.get())));
-                        callback.accept(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
-                    }));
-                });
+                            int currentBalance = optCurrentBalance.getAsInt();
+                            if (modifyAction == ModifyAction.ADD){
+                                currentBalance += value;
+                            } else if (modifyAction == ModifyAction.REMOVE) {
+                                currentBalance -= value;
+                            }
+
+                            String sourceName = (source instanceof Player player)
+                                    ? player.getUsername() : "CONSOLE";
+
+                            TagResolver.Builder builder = TagResolver.builder()
+                                    .resolver(Placeholder.unparsed("value", String.valueOf(valueArr[0])))
+                                    .resolver(Placeholder.unparsed("source_name", sourceName))
+                                    .resolver(Placeholder.unparsed("data_type", Objects.requireNonNull(DataTypeDisplay.getDisplayNameByDataType(dataType))))
+                                    .resolver(Placeholder.unparsed("current_balance", String.valueOf(currentBalance)));
+                            callback.accept(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
+                        });
             }
         }
 
         private enum DataTypeDisplay {
             KILLS("kills", PlayerDataType.KILLS),
             DEATHS("deaths", PlayerDataType.DEATHS),
-            GAMES("games played", PlayerDataType.GAMES),
+            GAMES("games played", PlayerDataType.GAMES_PLAYED),
             PLAYTIME("hours of playtime", PlayerDataType.PLAYTIME),
             XP("xp", PlayerDataType.XP),
             LEVEL("levels", PlayerDataType.LEVEL),
@@ -230,6 +248,11 @@ public enum PlayerDataCommandsMessagesConfig {
                 }
                 return null;
             }
+        }
+        public enum ModifyAction {
+            SET,
+            ADD,
+            REMOVE
         }
     }
 }

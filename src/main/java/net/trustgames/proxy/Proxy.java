@@ -17,9 +17,9 @@ import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.managers.ConfigManager;
 import net.trustgames.proxy.player.activity.PlayerActivityHandler;
+import net.trustgames.proxy.player.data.handler.PlayerDataExpiryHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
-import net.trustgames.proxy.player.data.handler.PlayerDataRemoveHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
 import net.trustgames.proxy.tablist.TablistHandler;
@@ -70,7 +70,7 @@ public class Proxy {
         initializeRedis();
         initializeRabbit();
 
-        PlaceholderUtils.initialize();
+        new PlaceholderUtils(toolkit).initialize();
         registerCommands();
         registerEvents();
         new AnnounceHandler(this);
@@ -78,7 +78,6 @@ public class Proxy {
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
-        System.out.println(event.toString());
         System.out.println("BEFORE CLOSE");
         toolkit.closeConnections();
         System.out.println("AFTER CLOSE");
@@ -102,8 +101,8 @@ public class Proxy {
     private void registerEvents() {
         new PlayerDataNameHandler(this);
         new PlayerDataPlaytimeHandler(this);
-        new PlayerDataRemoveHandler(this);
         new PlayerActivityHandler(this);
+        new PlayerDataExpiryHandler(this);
         EventManager eventManager = server.getEventManager();
         eventManager.register(this, new TablistHandler());
         eventManager.register(this, new ChatLimiter());

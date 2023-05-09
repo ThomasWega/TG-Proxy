@@ -5,7 +5,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.toolkit.Toolkit;
-import net.trustgames.toolkit.database.player.data.PlayerData;
+import net.trustgames.toolkit.database.player.data.PlayerDataFetcher;
 import net.trustgames.toolkit.database.player.data.config.PlayerDataType;
 
 import java.util.HashMap;
@@ -35,7 +35,7 @@ public class PlayerDataPlaytimeHandler {
         long endTime = System.currentTimeMillis();
         long durationInMillis = endTime - startTimes.get(uuid);
         int durationInSec = (int) Math.floor(durationInMillis / 1000d);
-        new PlayerData(toolkit, uuid, PlayerDataType.PLAYTIME).addData(durationInSec);
+        new PlayerDataFetcher(toolkit).addDataAsync(uuid, PlayerDataType.PLAYTIME, durationInSec);
     }
 }
 
