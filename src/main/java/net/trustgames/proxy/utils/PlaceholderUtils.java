@@ -24,33 +24,38 @@ public class PlaceholderUtils {
     public void initialize() {
         Expansion expansion = Expansion.builder("tg")
                 .filter(Player.class)
-                .audiencePlaceholder("player_prefix_spaced", ((audience, queue, ctx) ->
+                .audiencePlaceholder("player_prefix_spaced", ((audience, queue, ctx) -> 
                         Tag.selfClosingInserting(formatPrefix(((Player) audience)))))
+
                 .audiencePlaceholder("player_level", ((audience, queue, ctx) ->
-                        Tag.selfClosingInserting(Component.text(getLevel(((Player) audience).getUniqueId())))))
+                    Tag.selfClosingInserting(Component.text(getLevel(((Player) audience).getUniqueId())))))
+
                 .audiencePlaceholder("player_level_progress", ((audience, queue, ctx) ->
                         Tag.selfClosingInserting(Component.text(
                                 String.format("%.1f", getLevelProgress(((Player) audience).getUniqueId()) * 100)))))
+
                 .build();
 
         expansion.register();
     }
 
     private int getLevel(UUID uuid) {
+        System.out.println("GET LEVAAA");
         return new PlayerDataFetcher(toolkit).resolveIntData(uuid, PlayerDataType.LEVEL).orElse(0);
     }
 
     private float getLevelProgress(UUID uuid) {
+        System.out.println("GET PROGAAA");
         int xp = new PlayerDataFetcher(toolkit).resolveIntData(uuid, PlayerDataType.XP).orElse(0);
         return LevelUtils.getProgress(xp);
     }
-
+    
     private Component formatPrefix(Player player) {
         String primaryGroup = LuckPermsManager.getUser(player).getPrimaryGroup();
         Component prefix = LuckPermsManager.getPlayerPrefix(player);
         if (!(primaryGroup.equals("default"))){
             prefix = prefix.append(Component.text(" "));
-        }
+        } 
         return prefix;
     }
 }
