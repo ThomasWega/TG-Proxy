@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
 
 public enum PlayerDataCommandsMessagesConfig {
     PREFIX("<color:#3498db>Economy | </color>");
@@ -126,8 +126,8 @@ public enum PlayerDataCommandsMessagesConfig {
     public static class Modify {
         public enum Sender {
             SET(PREFIX.stringPrefix + "<dark_gray>Set <white><target_name>'s <yellow><data_type> <dark_gray>to <yellow><value>"),
-            ADD(PREFIX.stringPrefix + "<dark_gray>Added <yellow><value> <data_type> <dark_gray>to player <white><target_name><dark_gray>. His current amount: <yellow><current_balance> <data_type>"),
-            REMOVE(PREFIX.stringPrefix + "<dark_gray>Removed <yellow><value> <data_type> <dark_gray>from player <white><target_name><dark_gray>. His current amount: <yellow><current_balance> <data_type>");
+            ADD(PREFIX.stringPrefix + "<dark_gray>Added <yellow><value> <data_type> <dark_gray>to player <white><target_name><dark_gray>. His current amount: <yellow><new_balance> <data_type>"),
+            REMOVE(PREFIX.stringPrefix + "<dark_gray>Removed <yellow><value> <data_type> <dark_gray>from player <white><target_name><dark_gray>. His current amount: <yellow><new_balance> <data_type>");
 
             private final String message;
 
@@ -135,17 +135,17 @@ public enum PlayerDataCommandsMessagesConfig {
                 this.message = message;
             }
 
-            public void formatMessage(@NotNull Toolkit toolkit,
+            public CompletableFuture<Optional<Component>> formatMessage(@NotNull Toolkit toolkit,
                                       @NotNull String targetName,
                                       int value,
                                       @NotNull ModifyAction modifyAction,
-                                      @NotNull PlayerDataType dataType,
-                                      Consumer<Optional<Component>> callback) {
+                                      @NotNull PlayerDataType dataType) {
+                CompletableFuture<Optional<Component>> future = new CompletableFuture<>();
                 int[] valueArr = {value};
                 PlayerDataFetcher dataFetcher = new PlayerDataFetcher(toolkit);
                 dataFetcher.resolveIntDataAsync(targetName, dataType).thenAccept(optCurrentBalance -> {
                     if (optCurrentBalance.isEmpty()) {
-                        callback.accept(Optional.empty());
+                        future.complete(Optional.empty());
                         return;
                     }
                     // convert seconds to hours
@@ -154,26 +154,34 @@ public enum PlayerDataCommandsMessagesConfig {
                     }
 
                     int currentBalance = optCurrentBalance.getAsInt();
+                    int newBalance;
                     if (modifyAction == ModifyAction.ADD){
-                        currentBalance += value;
+                        newBalance = currentBalance + value;
                     } else if (modifyAction == ModifyAction.REMOVE) {
-                        currentBalance -= value;
+                        newBalance = currentBalance - value;
+                    } else {
+                        newBalance = currentBalance;
+                    }
+
+                    if (newBalance > 0){
+                        newBalance = 0;
                     }
 
                     TagResolver.Builder builder = TagResolver.builder()
                             .resolver(Placeholder.unparsed("value", String.valueOf(valueArr[0])))
                             .resolver(Placeholder.unparsed("target_name", targetName))
                             .resolver(Placeholder.unparsed("data_type", Objects.requireNonNull(DataTypeDisplay.getDisplayNameByDataType(dataType))))
-                            .resolver(Placeholder.unparsed("current_balance", String.valueOf(currentBalance)));
-                    callback.accept(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
+                            .resolver(Placeholder.unparsed("new_balance", String.valueOf(newBalance)));
+                    future.complete(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
                 });
+                return future;
             }
         }
 
         public enum Target {
             SET(PREFIX.stringPrefix + "<dark_gray>You've been set <yellow><data_type> <dark_gray>to <yellow><value><dark_gray> by <white><source_name>"),
-            ADD(PREFIX.stringPrefix + "<dark_gray>You've been added <yellow><value> <data_type><dark_gray> by <white><source_name><dark_gray>. Current amount: <yellow><current_balance> <data_type>"),
-            REMOVE(PREFIX.stringPrefix + "<dark_gray>You've been removed <yellow><value> <data_type><dark_gray> by <white><source_name><dark_gray>. Current amount: <yellow><current_balance> <data_type>");
+            ADD(PREFIX.stringPrefix + "<dark_gray>You've been added <yellow><value> <data_type><dark_gray> by <white><source_name><dark_gray>. Current amount: <yellow><new_balance> <data_type>"),
+            REMOVE(PREFIX.stringPrefix + "<dark_gray>You've been removed <yellow><value> <data_type><dark_gray> by <white><source_name><dark_gray>. Current amount: <yellow><new_balance> <data_type>");
 
             private final String message;
 
@@ -181,18 +189,18 @@ public enum PlayerDataCommandsMessagesConfig {
                 this.message = message;
             }
 
-            public void formatMessage(@NotNull Toolkit toolkit,
+            public CompletableFuture<Optional<Component>> formatMessage(@NotNull Toolkit toolkit,
                                       @NotNull CommandSource source,
                                       @NotNull String targetName,
                                       int value,
                                       @NotNull ModifyAction modifyAction,
-                                      @NotNull PlayerDataType dataType,
-                                      Consumer<Optional<Component>> callback) {
+                                      @NotNull PlayerDataType dataType) {
+                CompletableFuture<Optional<Component>> future = new CompletableFuture<>();
                 int[] valueArr = {value};
                 new PlayerDataFetcher(toolkit).resolveIntDataAsync(targetName, dataType)
                         .thenAccept(optCurrentBalance -> {
                             if (optCurrentBalance.isEmpty()) {
-                                callback.accept(Optional.empty());
+                                future.complete(Optional.empty());
                                 return;
                             }
                             // convert seconds to hours
@@ -201,10 +209,17 @@ public enum PlayerDataCommandsMessagesConfig {
                             }
 
                             int currentBalance = optCurrentBalance.getAsInt();
+                            int newBalance;
                             if (modifyAction == ModifyAction.ADD){
-                                currentBalance += value;
+                                newBalance = currentBalance + value;
                             } else if (modifyAction == ModifyAction.REMOVE) {
-                                currentBalance -= value;
+                                newBalance = currentBalance - value;
+                            } else {
+                                newBalance = currentBalance;
+                            }
+
+                            if (newBalance > 0){
+                                newBalance = 0;
                             }
 
                             String sourceName = (source instanceof Player player)
@@ -214,9 +229,10 @@ public enum PlayerDataCommandsMessagesConfig {
                                     .resolver(Placeholder.unparsed("value", String.valueOf(valueArr[0])))
                                     .resolver(Placeholder.unparsed("source_name", sourceName))
                                     .resolver(Placeholder.unparsed("data_type", Objects.requireNonNull(DataTypeDisplay.getDisplayNameByDataType(dataType))))
-                                    .resolver(Placeholder.unparsed("current_balance", String.valueOf(currentBalance)));
-                            callback.accept(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
+                                    .resolver(Placeholder.unparsed("new_balance", String.valueOf(newBalance)));
+                            future.complete(Optional.of(MiniMessage.miniMessage().deserialize(message, builder.build())));
                         });
+                return future;
             }
         }
 

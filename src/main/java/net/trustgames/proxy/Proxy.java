@@ -17,7 +17,6 @@ import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.managers.ConfigManager;
 import net.trustgames.proxy.player.activity.PlayerActivityHandler;
-import net.trustgames.proxy.player.data.handler.PlayerDataExpiryHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
@@ -102,7 +101,6 @@ public class Proxy {
         new PlayerDataNameHandler(this);
         new PlayerDataPlaytimeHandler(this);
         new PlayerActivityHandler(this);
-        new PlayerDataExpiryHandler(this);
         EventManager eventManager = server.getEventManager();
         eventManager.register(this, new TablistHandler());
         eventManager.register(this, new ChatLimiter());

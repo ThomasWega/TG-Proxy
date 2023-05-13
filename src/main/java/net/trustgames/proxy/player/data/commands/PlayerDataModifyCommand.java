@@ -12,17 +12,14 @@ import cloud.commandframework.velocity.VelocityCommandManager;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import net.kyori.adventure.text.Component;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.proxy.player.data.commands.config.PlayerDataCommandsMessagesConfig;
 import net.trustgames.toolkit.Toolkit;
-import net.trustgames.toolkit.config.CommandConfig;
 import net.trustgames.toolkit.config.PermissionConfig;
 import net.trustgames.toolkit.database.player.data.PlayerDataFetcher;
 import net.trustgames.toolkit.database.player.data.config.PlayerDataType;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 public class PlayerDataModifyCommand {
 
@@ -124,78 +121,71 @@ public class PlayerDataModifyCommand {
                         int value,
                         boolean silent) {
         System.out.println("FIRST FETCH");
-        new PlayerDataFetcher(toolkit).resolveUUIDAsync(targetName).thenAccept(targetOptUuid -> {
-            System.out.println("AFTER FETKIK - " + targetOptUuid);
-            if (targetOptUuid.isEmpty()) {
-                source.sendMessage(CommandConfig.COMMAND_PLAYER_UNKNOWN.addComponent(Component.text(targetName)));
-                return;
-            }
+        System.out.println("BEFORE UUID");
 
-            UUID targetUuid = targetOptUuid.get();
-            PlayerDataFetcher dataFetcher = new PlayerDataFetcher(toolkit);
-            switch (actionType) {
-                case SET -> {
-                    if (!silent) {
-                        PlayerDataCommandsMessagesConfig.Modify.Target.SET.formatMessage(
-                                toolkit, source, targetName, value,
-                                PlayerDataCommandsMessagesConfig.Modify.ModifyAction.SET,
-                                dataType, componentMessage -> {
-                                    if (componentMessage.isEmpty()) return;
-                                    server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
-                                }
-                        );
-                    }
-                    PlayerDataCommandsMessagesConfig.Modify.Sender.SET.formatMessage(
-                            toolkit, targetName, value,
-                            PlayerDataCommandsMessagesConfig.Modify.ModifyAction.SET,
-                            dataType, componentMessage -> {
-                                if (componentMessage.isEmpty()) return;
-                                source.sendMessage(componentMessage.get());
-                    });
-                    dataFetcher.setDataAsync(targetUuid, dataType, value);
+        PlayerDataFetcher dataFetcher = new PlayerDataFetcher(toolkit);
+        switch (actionType) {
+            case SET -> {
+                if (!silent) {
+                    PlayerDataCommandsMessagesConfig.Modify.Target.SET.formatMessage(
+                                    toolkit, source, targetName, value,
+                                    PlayerDataCommandsMessagesConfig.Modify.ModifyAction.SET, dataType)
+                            .thenAccept(componentMessage -> {
+                                        if (componentMessage.isEmpty()) return;
+                                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
+                                    }
+                            );
                 }
-                case ADD -> {
-                    if (!silent) {
-                        PlayerDataCommandsMessagesConfig.Modify.Target.ADD.formatMessage(
-                                toolkit, source, targetName, value,
-                                PlayerDataCommandsMessagesConfig.Modify.ModifyAction.ADD,
-                                dataType, componentMessage -> {
-                                    if (componentMessage.isEmpty()) return;
-                                    server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
-                                }
-                        );
-                    }
-                    PlayerDataCommandsMessagesConfig.Modify.Sender.ADD.formatMessage(
-                            toolkit, targetName, value,
-                            PlayerDataCommandsMessagesConfig.Modify.ModifyAction.ADD,
-                            dataType, componentMessage -> {
-                                if (componentMessage.isEmpty()) return;
-                                source.sendMessage(componentMessage.get());
-                            });
-                    dataFetcher.addDataAsync(targetUuid, dataType, value);
-                }
-                case REMOVE -> {
-                    if (!silent) {
-                        PlayerDataCommandsMessagesConfig.Modify.Target.REMOVE.formatMessage(
-                                toolkit, source, targetName, value,
-                                PlayerDataCommandsMessagesConfig.Modify.ModifyAction.REMOVE,
-                                dataType, componentMessage -> {
-                                    if (componentMessage.isEmpty()) return;
-                                    server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
-                                }
-                        );
-                    }
-                    PlayerDataCommandsMessagesConfig.Modify.Sender.REMOVE.formatMessage(
-                            toolkit, targetName, value,
-                            PlayerDataCommandsMessagesConfig.Modify.ModifyAction.REMOVE,
-                            dataType, componentMessage -> {
-                                if (componentMessage.isEmpty()) return;
-                                source.sendMessage(componentMessage.get());
-                            });
-                    dataFetcher.subtractDataAsync(targetUuid, dataType, value);
-                }
+                PlayerDataCommandsMessagesConfig.Modify.Sender.SET.formatMessage(
+                                toolkit, targetName, value,
+                                PlayerDataCommandsMessagesConfig.Modify.ModifyAction.SET, dataType)
+                        .thenAccept(componentMessage -> {
+                            if (componentMessage.isEmpty()) return;
+                            source.sendMessage(componentMessage.get());
+                        });
+                dataFetcher.setDataAsync(targetName, dataType, value);
             }
-        });
+            case ADD -> {
+                if (!silent) {
+                    PlayerDataCommandsMessagesConfig.Modify.Target.ADD.formatMessage(
+                                    toolkit, source, targetName, value,
+                                    PlayerDataCommandsMessagesConfig.Modify.ModifyAction.ADD, dataType)
+                            .thenAccept(componentMessage -> {
+                                        if (componentMessage.isEmpty()) return;
+                                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
+                                    }
+                            );
+                }
+                PlayerDataCommandsMessagesConfig.Modify.Sender.ADD.formatMessage(
+                                toolkit, targetName, value,
+                                PlayerDataCommandsMessagesConfig.Modify.ModifyAction.ADD, dataType)
+                        .thenAccept(componentMessage -> {
+                            if (componentMessage.isEmpty()) return;
+                            source.sendMessage(componentMessage.get());
+                        });
+                dataFetcher.addDataAsync(targetName, dataType, value);
+            }
+            case REMOVE -> {
+                if (!silent) {
+                    PlayerDataCommandsMessagesConfig.Modify.Target.REMOVE.formatMessage(
+                                    toolkit, source, targetName, value,
+                                    PlayerDataCommandsMessagesConfig.Modify.ModifyAction.REMOVE, dataType)
+                            .thenAccept(componentMessage -> {
+                                        if (componentMessage.isEmpty()) return;
+                                        server.getPlayer(targetName).ifPresent(player -> player.sendMessage(componentMessage.get()));
+                                    }
+                            );
+                }
+                PlayerDataCommandsMessagesConfig.Modify.Sender.REMOVE.formatMessage(
+                                toolkit, targetName, value,
+                                PlayerDataCommandsMessagesConfig.Modify.ModifyAction.REMOVE, dataType)
+                        .thenAccept(componentMessage -> {
+                            if (componentMessage.isEmpty()) return;
+                            source.sendMessage(componentMessage.get());
+                        });
+                dataFetcher.subtractDataAsync(targetName, dataType, value);
+            }
+        }
     }
 
     private enum ActionType {

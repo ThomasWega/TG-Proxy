@@ -27,7 +27,7 @@ public class ConfigManager {
 
             return loader.load();
         } catch (IOException e) {
-            throw new RuntimeException("Trying to load files", e);
+            throw new RuntimeException("Failed to load config file " + configName, e);
         }
     }
 
