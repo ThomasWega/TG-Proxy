@@ -4,7 +4,6 @@ import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.velocity.VelocityCommandManager;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
@@ -17,10 +16,9 @@ import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.managers.ConfigManager;
 import net.trustgames.proxy.player.activity.PlayerActivityHandler;
-import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
-import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
-import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
+import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
+import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
@@ -99,7 +97,6 @@ public class Proxy {
 
     private void registerEvents() {
         new PlayerDataNameHandler(this);
-        new PlayerDataPlaytimeHandler(this);
         new PlayerActivityHandler(this);
         new TablistDecorationHandler(this);
         new ChatLimiter(this);
