@@ -4,14 +4,14 @@ import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
-public enum TablistConfig {
+public enum TablistDecorationConfig {
     TABLIST_HEADER("<color:#ffa600><b>TRUSTGAMES</b><newline><color:#363c3d>MiniGames Playground<newline>"),
     TABLIST_FOOTER("<newline><green>store.trustgames.net");
 
     @Getter
     private final String value;
 
-    TablistConfig(String value) {
+    TablistDecorationConfig(String value) {
         this.value = value;
     }
 

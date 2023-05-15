@@ -21,7 +21,7 @@ import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
-import net.trustgames.proxy.tablist.TablistHandler;
+import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.managers.HikariManager;
@@ -90,8 +90,8 @@ public class Proxy {
                 Function.identity(),
                 Function.identity()
         );
-
         commandManager.brigadierManager().setNativeNumberSuggestions(false);
+
         new PlayerDataLookupCommand(this);
         new PlayerDataModifyCommand(this);
         new TextCommands(commandManager);
@@ -101,9 +101,8 @@ public class Proxy {
         new PlayerDataNameHandler(this);
         new PlayerDataPlaytimeHandler(this);
         new PlayerActivityHandler(this);
-        EventManager eventManager = server.getEventManager();
-        eventManager.register(this, new TablistHandler());
-        eventManager.register(this, new ChatLimiter());
+        new TablistDecorationHandler(this);
+        new ChatLimiter(this);
     }
 
     private void initializeHikari() {

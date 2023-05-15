@@ -6,6 +6,7 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
+import net.trustgames.proxy.Proxy;
 import net.trustgames.proxy.utils.ColorUtils;
 import net.trustgames.toolkit.config.PermissionConfig;
 import net.trustgames.toolkit.config.chat.ChatConfig;
@@ -20,6 +21,11 @@ import java.util.UUID;
  * If the message is the same as the last one, the timeout can be longer.
  */
 public final class ChatLimiter {
+
+    public ChatLimiter(Proxy proxy) {
+        proxy.getServer().getEventManager().register(proxy, this);
+    }
+
     private final HashMap<UUID, PlayerChatCooldown> cooldowns = new HashMap<>();
 
     @Subscribe(order = PostOrder.FIRST)
