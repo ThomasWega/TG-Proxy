@@ -54,7 +54,7 @@ public class PlaceholderUtils {
         String primaryGroup = LuckPermsManager.getUser(player).getPrimaryGroup();
         Component prefix = LuckPermsManager.getPlayerPrefix(player);
         if (!(primaryGroup.equals("default"))){
-            prefix = prefix.append(Component.text(" "));
+            prefix = prefix.appendSpace();
         } 
         return prefix;
     }

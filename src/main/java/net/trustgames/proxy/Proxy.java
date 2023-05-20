@@ -35,7 +35,7 @@ import java.util.function.Function;
 
 
 @Plugin(
-        id = "proxy",
+        id = "tg-proxy",
         name = "TG-PROXY",
         version = "0.1-SNAPSHOT",
         description = "Proxy plugin for TrustGames.net",
@@ -55,10 +55,10 @@ public class Proxy {
     private VelocityCommandManager<CommandSource> commandManager;
 
     @Inject
-    public Proxy(Logger logger, ProxyServer server, @DataDirectory Path data) {
+    public Proxy(Logger logger, ProxyServer server, @DataDirectory Path dataDir) {
         this.logger = logger;
         this.server = server;
-        this.dataFolder = data.toFile();
+        this.dataFolder = dataDir.toFile();
     }
 
     @Subscribe
