@@ -163,7 +163,7 @@ public enum PlayerDataCommandsMessagesConfig {
                         newBalance = currentBalance;
                     }
 
-                    if (newBalance > 0){
+                    if (newBalance < 0){
                         newBalance = 0;
                     }
 
@@ -218,7 +218,7 @@ public enum PlayerDataCommandsMessagesConfig {
                                 newBalance = currentBalance;
                             }
 
-                            if (newBalance > 0){
+                            if (newBalance < 0){
                                 newBalance = 0;
                             }
 
