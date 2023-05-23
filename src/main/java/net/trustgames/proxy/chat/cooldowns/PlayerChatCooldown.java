@@ -2,11 +2,12 @@ package net.trustgames.proxy.chat.cooldowns;
 
 import com.velocitypowered.api.proxy.Player;
 import lombok.Setter;
-import net.trustgames.proxy.managers.LuckPermsManager;
 import net.trustgames.toolkit.config.chat.ChatLimitConfig;
+import net.trustgames.toolkit.managers.permission.LuckPermsManager;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class PlayerChatCooldown {
     private final double cooldown;
@@ -35,12 +36,8 @@ public class PlayerChatCooldown {
                 .map(String::toLowerCase)
                 .toList();
 
-        String group = LuckPermsManager.getPlayerGroupFromList(player, groups);
-        if (group == null) {
-            return ChatLimitConfig.DEFAULT;
-        } else {
-            return ChatLimitConfig.valueOf(group.toUpperCase());
-        }
+        Optional<String> group = LuckPermsManager.getOnlinePlayerGroupFromList(player.getUniqueId(), groups);
+        return group.map(s -> ChatLimitConfig.valueOf(s.toUpperCase())).orElse(ChatLimitConfig.DEFAULT);
     }
 
     /**
