@@ -7,6 +7,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -22,8 +23,8 @@ import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
-import net.trustgames.toolkit.managers.HikariManager;
-import net.trustgames.toolkit.managers.rabbit.RabbitManager;
+import net.trustgames.toolkit.managers.database.HikariManager;
+import net.trustgames.toolkit.managers.message_queue.RabbitManager;
 import ninja.leaping.configurate.ConfigurationNode;
 import org.slf4j.Logger;
 import redis.clients.jedis.JedisPool;
@@ -40,7 +41,12 @@ import java.util.function.Function;
         version = "0.1-SNAPSHOT",
         description = "Proxy plugin for TrustGames.net",
         url = "www.trustgames.net",
-        authors = {"Wega"}
+        authors = {"Wega"},
+        dependencies = {
+                @Dependency(id = "miniplaceholders"),
+                @Dependency(id = "player-expansion"),
+                @Dependency(id = "luckperms-expansion")
+        }
 )
 public class Proxy {
 
