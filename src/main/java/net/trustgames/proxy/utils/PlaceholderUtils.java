@@ -9,6 +9,7 @@ import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.player.data.PlayerDataFetcher;
 import net.trustgames.toolkit.database.player.data.config.PlayerDataType;
 import net.trustgames.toolkit.managers.permission.LuckPermsManager;
+import net.trustgames.toolkit.utils.ColorUtils;
 import net.trustgames.toolkit.utils.LevelUtils;
 
 import java.util.Optional;

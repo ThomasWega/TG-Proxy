@@ -17,9 +17,6 @@ Proxy for TrustGames.net
 - Player name database + cache update 
 - Player playtime database + cache update
 - Tablist handler
-- Color conversion Util
-- Component conversion Util
-- JSON conversion Util
 - Placeholder conversion Util (MiniPlaceholders)
 
 ###### Commands:

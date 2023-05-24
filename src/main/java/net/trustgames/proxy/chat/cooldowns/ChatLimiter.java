@@ -7,7 +7,7 @@ import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.trustgames.proxy.Proxy;
-import net.trustgames.proxy.utils.ColorUtils;
+import net.trustgames.toolkit.utils.ColorUtils;
 import net.trustgames.toolkit.config.PermissionConfig;
 import net.trustgames.toolkit.config.chat.ChatConfig;
 import org.jetbrains.annotations.NotNull;
