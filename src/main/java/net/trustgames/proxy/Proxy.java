@@ -12,7 +12,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.trustgames.proxy.chat.announcer.AnnounceHandler;
 import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
@@ -35,6 +34,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 
 @Plugin(
@@ -51,7 +51,7 @@ import java.util.function.Function;
         }
 )
 public class Proxy {
-    public static ComponentLogger LOGGER;
+    public static Logger LOGGER;
     @Getter
     private final ProxyServer server;
     @Getter
@@ -61,15 +61,14 @@ public class Proxy {
     private VelocityCommandManager<CommandSource> commandManager;
 
     @Inject
-    public Proxy(ProxyServer server, @DataDirectory Path dataDir) {
+    public Proxy(Logger logger, ProxyServer server, @DataDirectory Path dataDir) {
+        LOGGER = logger;
         this.server = server;
         this.dataFolder = dataDir.toFile();
     }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        LOGGER = ComponentLogger.logger(Proxy.class);
-
         initializeHikari();
         initializeRedis();
         initializeRabbit();
@@ -113,7 +112,7 @@ public class Proxy {
         ConfigurationNode hikariConfig = ConfigManager.loadConfig(dataFolder, "mariadb.yml");
 
         if (!hikariConfig.getNode("mariadb", "enable").getBoolean()) {
-            LOGGER.warn("HikariCP is disabled");
+            LOGGER.warning("HikariCP is disabled");
             return;
         }
 
@@ -144,7 +143,7 @@ public class Proxy {
         ConfigurationNode rabbitConfig = ConfigManager.loadConfig(dataFolder, "rabbitmq.yml");
 
         if (!rabbitConfig.getNode("rabbitmq", "enable").getBoolean()) {
-            LOGGER.warn("RabbitMQ is disabled");
+            LOGGER.warning("RabbitMQ is disabled");
             return;
         }
 
@@ -165,7 +164,7 @@ public class Proxy {
     private void initializeRedis() {
         ConfigurationNode redisConfig = ConfigManager.loadConfig(dataFolder, "redis.yml");
         if (!redisConfig.getNode("redis", "enable").getBoolean()) {
-            LOGGER.warn("Redis is disabled");
+            LOGGER.warning("Redis is disabled");
             return;
         }
 

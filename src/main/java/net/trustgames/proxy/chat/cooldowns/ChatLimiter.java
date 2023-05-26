@@ -29,7 +29,7 @@ public final class ChatLimiter {
     private final HashMap<UUID, PlayerChatCooldown> cooldowns = new HashMap<>();
 
     @Subscribe(order = PostOrder.FIRST)
-    public void limit(PlayerChatEvent event) {
+    private void limit(PlayerChatEvent event) {
         Player player = event.getPlayer();
         if (player.hasPermission(PermissionConfig.STAFF.getPermission())) return;
         UUID uuid = player.getUniqueId();
