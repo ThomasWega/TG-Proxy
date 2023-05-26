@@ -12,6 +12,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.trustgames.proxy.chat.announcer.AnnounceHandler;
 import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
@@ -23,10 +24,11 @@ import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
+import net.trustgames.toolkit.database.player.activity.PlayerActivityDB;
+import net.trustgames.toolkit.database.player.data.PlayerDataDB;
 import net.trustgames.toolkit.managers.database.HikariManager;
 import net.trustgames.toolkit.managers.message_queue.RabbitManager;
 import ninja.leaping.configurate.ConfigurationNode;
-import org.slf4j.Logger;
 import redis.clients.jedis.JedisPool;
 
 import java.io.File;
@@ -49,9 +51,7 @@ import java.util.function.Function;
         }
 )
 public class Proxy {
-
-    @Getter
-    private final Logger logger;
+    public static ComponentLogger LOGGER;
     @Getter
     private final ProxyServer server;
     @Getter
@@ -61,14 +61,15 @@ public class Proxy {
     private VelocityCommandManager<CommandSource> commandManager;
 
     @Inject
-    public Proxy(Logger logger, ProxyServer server, @DataDirectory Path dataDir) {
-        this.logger = logger;
+    public Proxy(ProxyServer server, @DataDirectory Path dataDir) {
         this.server = server;
         this.dataFolder = dataDir.toFile();
     }
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        LOGGER = ComponentLogger.logger(Proxy.class);
+
         initializeHikari();
         initializeRedis();
         initializeRabbit();
@@ -112,7 +113,7 @@ public class Proxy {
         ConfigurationNode hikariConfig = ConfigManager.loadConfig(dataFolder, "mariadb.yml");
 
         if (!hikariConfig.getNode("mariadb", "enable").getBoolean()) {
-            logger.warn("HikariCP is disabled");
+            LOGGER.warn("HikariCP is disabled");
             return;
         }
 
@@ -124,13 +125,26 @@ public class Proxy {
                 Objects.requireNonNull(hikariConfig.getNode("mariadb", "database").getString()),
                 hikariConfig.getNode("hikaricp", "pool-size").getInt()
         ));
+
+        HikariManager hikariManager = toolkit.getHikariManager();
+        if (hikariManager == null) {
+            throw new RuntimeException("HikariManager wasn't initialized");
+        }
+
+        hikariManager.onDataSourceInitialized(() -> {
+            new PlayerDataDB(hikariManager);
+            new PlayerActivityDB(hikariManager);
+        });
+
+        LOGGER.info("HikariCP is enabled");
+
     }
 
     private void initializeRabbit() {
         ConfigurationNode rabbitConfig = ConfigManager.loadConfig(dataFolder, "rabbitmq.yml");
 
         if (!rabbitConfig.getNode("rabbitmq", "enable").getBoolean()) {
-            logger.warn("RabbitMQ is disabled");
+            LOGGER.warn("RabbitMQ is disabled");
             return;
         }
 
@@ -140,12 +154,18 @@ public class Proxy {
                 Objects.requireNonNull(rabbitConfig.getNode("rabbitmq", "ip").getString()),
                 rabbitConfig.getNode("rabbitmq", "port").getInt())
         );
+
+        if (toolkit.getRabbitManager() == null) {
+            throw new RuntimeException("RabbitManager wasn't initialized");
+        }
+
+        LOGGER.info("RabbitMQ is enabled");
     }
 
     private void initializeRedis() {
         ConfigurationNode redisConfig = ConfigManager.loadConfig(dataFolder, "redis.yml");
         if (!redisConfig.getNode("redis", "enable").getBoolean()) {
-            logger.warn("Redis is disabled");
+            LOGGER.warn("Redis is disabled");
             return;
         }
 
@@ -155,5 +175,11 @@ public class Proxy {
                 redisConfig.getNode("redis", "user").getString(),
                 redisConfig.getNode("redis", "password").getString()
         ));
+
+        if (toolkit.getJedisPool() == null) {
+            throw new RuntimeException("JedisPool wasn't initialized");
+        }
+
+        LOGGER.info("Redis is enabled");
     }
 }
