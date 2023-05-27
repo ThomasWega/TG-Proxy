@@ -1,5 +1,6 @@
 package net.trustgames.proxy.player.data.handler;
 
+import com.velocitypowered.api.event.EventTask;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
@@ -18,8 +19,11 @@ public class PlayerDataNameHandler {
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    private void onPlayerJoin(LoginEvent event) {
-        Player player = event.getPlayer();
-        dataFetcher.setDataAsync(player.getUniqueId(), PlayerDataType.NAME, player.getUsername());
+    private EventTask onPlayerJoin(LoginEvent event) {
+        return EventTask.withContinuation(continuation -> {
+            Player player = event.getPlayer();
+            dataFetcher.setDataAsync(player.getUniqueId(), PlayerDataType.NAME, player.getUsername());
+            continuation.resume();
+        });
     }
 }

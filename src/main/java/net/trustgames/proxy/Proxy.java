@@ -4,6 +4,7 @@ import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.velocity.VelocityCommandManager;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.event.EventTask;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
@@ -15,6 +16,7 @@ import lombok.Getter;
 import net.trustgames.proxy.chat.announcer.AnnounceHandler;
 import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
+import net.trustgames.proxy.chat.filter.ChatFilter;
 import net.trustgames.proxy.managers.ConfigManager;
 import net.trustgames.proxy.player.activity.PlayerActivityHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
@@ -56,6 +58,7 @@ public class Proxy {
     private final ProxyServer server;
     @Getter
     private final Toolkit toolkit = new Toolkit();
+    @Getter
     private final File dataFolder;
     @Getter
     private VelocityCommandManager<CommandSource> commandManager;
@@ -68,22 +71,22 @@ public class Proxy {
     }
 
     @Subscribe
-    public void onProxyInitialization(ProxyInitializeEvent event) {
-        initializeHikari();
-        initializeRedis();
-        initializeRabbit();
+    public EventTask onProxyInitialization(ProxyInitializeEvent event) {
+        return EventTask.async(() -> {
+            initializeHikari();
+            initializeRedis();
+            initializeRabbit();
 
-        new PlaceholderUtils(toolkit).initialize();
-        registerCommands();
-        registerEvents();
-        new AnnounceHandler(this);
+            new PlaceholderUtils(toolkit).initialize();
+            registerCommands();
+            registerEvents();
+            new AnnounceHandler(this);
+        });
     }
 
     @Subscribe
-    public void onProxyShutdown(ProxyShutdownEvent event) {
-        System.out.println("BEFORE CLOSE");
-        toolkit.closeConnections();
-        System.out.println("AFTER CLOSE");
+    public EventTask onProxyShutdown(ProxyShutdownEvent event) {
+        return EventTask.async(toolkit::closeConnections);
     }
 
     private void registerCommands() {
@@ -106,6 +109,7 @@ public class Proxy {
         new PlayerActivityHandler(this);
         new TablistDecorationHandler(this);
         new ChatLimiter(this);
+        new ChatFilter(this);
     }
 
     private void initializeHikari() {

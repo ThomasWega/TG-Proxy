@@ -1,5 +1,6 @@
 package net.trustgames.proxy.chat.cooldowns;
 
+import com.velocitypowered.api.event.EventTask;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
@@ -29,23 +30,27 @@ public final class ChatLimiter {
     private final HashMap<UUID, PlayerChatCooldown> cooldowns = new HashMap<>();
 
     @Subscribe(order = PostOrder.FIRST)
-    private void limit(PlayerChatEvent event) {
+    private EventTask limit(PlayerChatEvent event) {
         Player player = event.getPlayer();
-        if (player.hasPermission(PermissionConfig.STAFF.getPermission())) return;
+        if (player.hasPermission(PermissionConfig.STAFF.getPermission())) {
+            return null;
+        }
         UUID uuid = player.getUniqueId();
 
-        // add the player if not yet contained with new cooldown
-        cooldowns.computeIfAbsent(uuid, tempUuid -> new PlayerChatCooldown(player));
+        return EventTask.async(() -> {
+            // add the player if not yet contained with new cooldown
+            cooldowns.computeIfAbsent(uuid, tempUuid -> new PlayerChatCooldown(player));
 
-        PlayerChatCooldown cooldown = cooldowns.get(uuid);
-        String playerMessage = ColorUtils.stripColor(Component.text(event.getMessage()));
-        boolean same = cooldown.isSameMessage(playerMessage);
-        if (cooldown.isOnCooldown(same)) {
-            event.setResult(PlayerChatEvent.ChatResult.denied());
-            sendMessage(player, same);
-        } else {
-            cooldown.setLastMessageTime(System.currentTimeMillis());
-        }
+            PlayerChatCooldown cooldown = cooldowns.get(uuid);
+            String playerMessage = ColorUtils.stripColor(Component.text(event.getMessage()));
+            boolean same = cooldown.isSameMessage(playerMessage);
+            if (cooldown.isOnCooldown(same)) {
+                event.setResult(PlayerChatEvent.ChatResult.denied());
+                sendMessage(player, same);
+            } else {
+                cooldown.setLastMessageTime(System.currentTimeMillis());
+            }
+        });
     }
 
     private void sendMessage(@NotNull Player player, boolean sameMessage) {
