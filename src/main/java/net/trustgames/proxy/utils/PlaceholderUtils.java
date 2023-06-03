@@ -43,12 +43,10 @@ public class PlaceholderUtils {
     }
 
     private int getLevel(UUID uuid) {
-        System.out.println("GET LEVAAA");
         return new PlayerDataFetcher(toolkit).resolveIntData(uuid, PlayerDataType.LEVEL).orElse(0);
     }
 
     private float getLevelProgress(UUID uuid) {
-        System.out.println("GET PROGAAA");
         int xp = new PlayerDataFetcher(toolkit).resolveIntData(uuid, PlayerDataType.XP).orElse(0);
         return LevelUtils.getProgress(xp);
     }

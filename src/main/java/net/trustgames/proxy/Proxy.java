@@ -22,13 +22,15 @@ import net.trustgames.proxy.config.ConfigManager;
 import net.trustgames.proxy.player.activity.PlayerActivityHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
+import net.trustgames.proxy.player.data.commands.PlayerUptimeCommand;
 import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
+import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
 import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
+import net.trustgames.toolkit.database.HikariManager;
 import net.trustgames.toolkit.database.player.activity.PlayerActivityDB;
 import net.trustgames.toolkit.database.player.data.PlayerDataDB;
-import net.trustgames.toolkit.database.HikariManager;
 import net.trustgames.toolkit.message_queue.RabbitManager;
 import ninja.leaping.configurate.ConfigurationNode;
 import redis.clients.jedis.JedisPool;
@@ -102,12 +104,14 @@ public class Proxy {
 
         new PlayerDataLookupCommand(this);
         new PlayerDataModifyCommand(this);
+        new PlayerUptimeCommand(this);
         new TextCommands(commandManager);
     }
 
     private void registerEvents() {
         new PlayerDataNameHandler(this);
         new PlayerActivityHandler(this);
+        new PlayerDataPlaytimeHandler(this);
         new TablistDecorationHandler(this);
         new ChatLimiter(this);
         new ChatFilter(this);

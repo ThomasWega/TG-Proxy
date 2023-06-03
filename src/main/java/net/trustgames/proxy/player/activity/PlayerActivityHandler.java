@@ -8,7 +8,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.toolkit.database.player.activity.PlayerActivity;
 import net.trustgames.toolkit.database.player.activity.PlayerActivityFetcher;
-import net.trustgames.toolkit.database.player.activity.config.PlayerActivityType;
+import net.trustgames.toolkit.database.player.activity.config.PlayerAction;
 
 import java.net.InetSocketAddress;
 import java.sql.Timestamp;
@@ -28,16 +28,16 @@ public class PlayerActivityHandler {
 
     @Subscribe
     private void onPlayerJoin(LoginEvent event) {
-        insertNewActionAsync(event.getPlayer(), PlayerActivityType.JOIN.getAction());
+        insertNewActionAsync(event.getPlayer(), PlayerAction.JOIN);
     }
 
     @Subscribe
     private void onPlayerQuit(DisconnectEvent event) {
-        insertNewActionAsync(event.getPlayer(), PlayerActivityType.LEAVE.getAction());
+        insertNewActionAsync(event.getPlayer(), PlayerAction.LEAVE);
 
     }
 
-    private void insertNewActionAsync(Player player, String action) {
+    private void insertNewActionAsync(Player player, PlayerAction action) {
         server.getScheduler().buildTask(proxy, () -> {
             InetSocketAddress playerIp = player.getRemoteAddress();
             String playerIpString = (playerIp == null) ? null : playerIp.getHostString();
