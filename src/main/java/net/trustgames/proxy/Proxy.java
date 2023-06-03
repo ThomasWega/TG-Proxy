@@ -49,7 +49,7 @@ import java.util.logging.Logger;
         authors = {"Wega"},
         dependencies = {
                 @Dependency(id = "miniplaceholders"),
-                @Dependency(id = "player-expansion"),
+                @Dependency(id = "miniplaceholders-player-expansion"),
                 @Dependency(id = "luckperms-expansion")
         }
 )
