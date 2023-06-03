@@ -19,7 +19,6 @@ import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.chat.cooldowns.CommandsLimiter;
 import net.trustgames.proxy.chat.filter.ChatFilter;
 import net.trustgames.proxy.config.ConfigManager;
-import net.trustgames.proxy.player.activity.PlayerActivityHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerUptimeCommand;
@@ -29,7 +28,6 @@ import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.HikariManager;
-import net.trustgames.toolkit.database.player.activity.PlayerActivityDB;
 import net.trustgames.toolkit.database.player.data.PlayerDataDB;
 import net.trustgames.toolkit.message_queue.RabbitManager;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -110,7 +108,6 @@ public class Proxy {
 
     private void registerEvents() {
         new PlayerDataNameHandler(this);
-        new PlayerActivityHandler(this);
         new PlayerDataPlaytimeHandler(this);
         new TablistDecorationHandler(this);
         new ChatLimiter(this);
@@ -140,10 +137,7 @@ public class Proxy {
             throw new RuntimeException("HikariManager wasn't initialized");
         }
 
-        hikariManager.onDataSourceInitialized(() -> {
-            new PlayerDataDB(hikariManager);
-            new PlayerActivityDB(hikariManager);
-        });
+        hikariManager.onDataSourceInitialized(() -> new PlayerDataDB(hikariManager));
 
         LOGGER.info("HikariCP is enabled");
 
