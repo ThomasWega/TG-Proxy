@@ -18,7 +18,7 @@ public class PlayerDataNameHandler {
         proxy.getServer().getEventManager().register(proxy, this);
     }
 
-    @Subscribe(order = PostOrder.FIRST)
+    @Subscribe(order = PostOrder.EARLY)
     private EventTask onPlayerJoin(LoginEvent event) {
         return EventTask.withContinuation(continuation -> {
             Player player = event.getPlayer();
