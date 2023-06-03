@@ -63,7 +63,7 @@ public enum PlayerDataCommandsMessagesConfig {
             System.out.println("SO WTF?");
             // convert seconds to hours
             if (dataType == PlayerDataType.PLAYTIME) {
-                value = ((value / 60) / 60);
+                value = (value / 3600);
             }
             TagResolver tags = TagResolver.builder()
                     .resolver(MiniPlaceholders.getAudiencePlaceholders(sender))
