@@ -1,5 +1,6 @@
 package net.trustgames.proxy.managers;
 
+import net.trustgames.proxy.Proxy;
 import net.trustgames.toolkit.managers.file.FileLoader;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
@@ -19,7 +20,7 @@ public class ConfigManager {
     public static ConfigurationNode loadConfig(final File directory, String configName) {
         try {
             // creates the file if not existent
-            File file = FileLoader.loadFile(directory, configName);
+            File file = FileLoader.loadFile(Proxy.class.getClassLoader(), directory, configName);
 
             final YAMLConfigurationLoader loader = YAMLConfigurationLoader.builder()
                     .setFile(file)

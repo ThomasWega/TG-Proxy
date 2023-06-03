@@ -16,6 +16,7 @@ import lombok.Getter;
 import net.trustgames.proxy.chat.announcer.AnnounceHandler;
 import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
+import net.trustgames.proxy.chat.cooldowns.CommandsLimiter;
 import net.trustgames.proxy.chat.filter.ChatFilter;
 import net.trustgames.proxy.managers.ConfigManager;
 import net.trustgames.proxy.player.activity.PlayerActivityHandler;
@@ -110,6 +111,7 @@ public class Proxy {
         new TablistDecorationHandler(this);
         new ChatLimiter(this);
         new ChatFilter(this);
+        new CommandsLimiter(this);
     }
 
     private void initializeHikari() {
