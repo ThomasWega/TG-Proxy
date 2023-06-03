@@ -19,7 +19,6 @@ Proxy for TrustGames.net
 - Player name database + cache update 
 - Player playtime database + cache update
 - Tablist handler
-- Placeholder conversion Util (MiniPlaceholders)
 
 ###### Commands:
 - /gems <name> (gold/xp/level/...)
