@@ -85,7 +85,7 @@ public class PlayerDataLookupCommand {
                     new PlayerDataFetcher(toolkit).resolveDataAsync(player.getUniqueId(), dataType).thenAccept(optData -> {
                         System.out.println("LOL - " + optData);
                         if (optData.isEmpty()) {
-                            player.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(player.getUsername())));
+                            player.sendMessage(CommandConfig.COMMAND_NO_DATA_PLAYER.addComponent(Component.text(player.getUsername())));
                             return;
                         }
 
@@ -125,7 +125,7 @@ public class PlayerDataLookupCommand {
                     dataFetcher.resolveDataAsync(targetName, dataType).thenAccept(optData -> {
                         System.out.println("OPTIK DATA - " + optData);
                         if (optData.isEmpty()) {
-                            source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
+                            source.sendMessage(CommandConfig.COMMAND_NO_DATA_PLAYER.addComponent(Component.text(targetName)));
                             return;
                         }
 
@@ -141,7 +141,7 @@ public class PlayerDataLookupCommand {
                     Player player = ((Player) context.getSender());
                     PlayerData.getPlayerDataAsync(toolkit, player.getUniqueId()).thenAccept(optPlayerData -> {
                         if (optPlayerData.isEmpty()) {
-                            player.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(player.getUsername())));
+                            player.sendMessage(CommandConfig.COMMAND_NO_DATA_PLAYER.addComponent(Component.text(player.getUsername())));
                             return;
                         }
 
@@ -168,7 +168,7 @@ public class PlayerDataLookupCommand {
                     String targetName = context.get(targetArg);
                     PlayerData.getPlayerDataAsync(toolkit, targetName).thenAccept(optPlayerData -> {
                         if (optPlayerData.isEmpty()) {
-                            source.sendMessage(CommandConfig.COMMAND_NO_PLAYER_DATA.addComponent(Component.text(targetName)));
+                            source.sendMessage(CommandConfig.COMMAND_NO_DATA_PLAYER.addComponent(Component.text(targetName)));
                             return;
                         }
 
