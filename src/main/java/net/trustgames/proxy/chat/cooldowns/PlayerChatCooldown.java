@@ -3,7 +3,7 @@ package net.trustgames.proxy.chat.cooldowns;
 import com.velocitypowered.api.proxy.Player;
 import lombok.Setter;
 import net.trustgames.toolkit.config.chat.ChatLimitConfig;
-import net.trustgames.toolkit.managers.permission.LuckPermsManager;
+import net.trustgames.toolkit.luckperms.LuckPermsManager;
 
 import java.util.Arrays;
 import java.util.List;

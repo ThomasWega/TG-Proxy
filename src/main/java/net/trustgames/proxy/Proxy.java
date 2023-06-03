@@ -28,8 +28,8 @@ import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.player.activity.PlayerActivityDB;
 import net.trustgames.toolkit.database.player.data.PlayerDataDB;
-import net.trustgames.toolkit.managers.database.HikariManager;
-import net.trustgames.toolkit.managers.message_queue.RabbitManager;
+import net.trustgames.toolkit.database.HikariManager;
+import net.trustgames.toolkit.message_queue.RabbitManager;
 import ninja.leaping.configurate.ConfigurationNode;
 import redis.clients.jedis.JedisPool;
 

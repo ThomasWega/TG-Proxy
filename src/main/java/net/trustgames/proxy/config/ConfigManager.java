@@ -1,7 +1,7 @@
 package net.trustgames.proxy.config;
 
 import net.trustgames.proxy.Proxy;
-import net.trustgames.toolkit.managers.file.FileLoader;
+import net.trustgames.toolkit.file.FileLoader;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader;
 
