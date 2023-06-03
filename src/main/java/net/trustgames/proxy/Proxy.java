@@ -11,6 +11,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
 import net.trustgames.proxy.chat.announcer.AnnounceHandler;
@@ -25,11 +26,11 @@ import net.trustgames.proxy.player.data.commands.PlayerUptimeCommand;
 import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
 import net.trustgames.proxy.tablist.TablistDecorationHandler;
-import net.trustgames.proxy.utils.PlaceholderUtils;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.HikariManager;
 import net.trustgames.toolkit.database.player.data.PlayerDataDB;
 import net.trustgames.toolkit.message_queue.RabbitManager;
+import net.trustgames.toolkit.placeholders.PlaceholderManager;
 import ninja.leaping.configurate.ConfigurationNode;
 import redis.clients.jedis.JedisPool;
 
@@ -77,8 +78,8 @@ public class Proxy {
             initializeHikari();
             initializeRedis();
             initializeRabbit();
+            initializePlaceholders();
 
-            new PlaceholderUtils(toolkit).initialize();
             registerCommands();
             registerEvents();
             new AnnounceHandler(this);
@@ -184,5 +185,12 @@ public class Proxy {
         }
 
         LOGGER.info("Redis is enabled");
+    }
+
+    private void initializePlaceholders(){
+        PlaceholderManager.createPlaceholders(toolkit)
+                .filter(Player.class)
+                .build()
+                .register();
     }
 }
