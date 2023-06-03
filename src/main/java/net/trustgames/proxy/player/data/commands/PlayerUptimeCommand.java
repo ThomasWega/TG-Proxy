@@ -20,8 +20,7 @@ public class PlayerUptimeCommand {
         Command.Builder<CommandSource> rootCommand = commandManager.commandBuilder("uptime",
                 CommandMeta.simple().with(CommandMeta.DESCRIPTION,
                                 "Check the time the player has been online for" +
-                                        "If no target is specified, it returns your own uptime." +
-                                        "Uptime is updated only when player switches to a different server"
+                                        "If no target is specified, it returns your own uptime."
                         )
                         .build()
         );

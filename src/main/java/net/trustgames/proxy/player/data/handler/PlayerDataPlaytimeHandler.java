@@ -15,12 +15,19 @@ import java.util.UUID;
 
 public class PlayerDataPlaytimeHandler {
 
-    private final Toolkit toolkit;
     private static final Map<UUID, Long> startTimes = new HashMap<>();
+    private final Toolkit toolkit;
 
     public PlayerDataPlaytimeHandler(Proxy proxy) {
         this.toolkit = proxy.getToolkit();
         proxy.getServer().getEventManager().register(proxy, this);
+    }
+
+    public static long getCurrentUptimeInMillis(UUID uuid) {
+        if (startTimes.get(uuid) == null) return 0L;
+
+        long endTime = System.currentTimeMillis();
+        return endTime - startTimes.get(uuid);
     }
 
     @Subscribe
@@ -47,11 +54,6 @@ public class PlayerDataPlaytimeHandler {
         long durationInMillis = getCurrentUptimeInMillis(uuid);
         int durationInSec = (int) Math.floor(durationInMillis / 1000d);
         new PlayerDataFetcher(toolkit).addDataAsync(uuid, PlayerDataType.PLAYTIME, durationInSec);
-    }
-
-    public static long getCurrentUptimeInMillis(UUID uuid) {
-        long endTime = System.currentTimeMillis();
-        return endTime - startTimes.get(uuid);
     }
 }
 
