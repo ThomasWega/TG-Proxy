@@ -10,7 +10,8 @@ Proxy for TrustGames.net
 ###### Features:
 - Chat announcer
 - Chat info commands (/discord, /store, ...)
-- Chat limiter
+- Chat limiter (cooldown)
+- Command limiter (cooldown)
 - Chat filter (profanity, ads)
 - Config manager
 - LuckPerms manager
