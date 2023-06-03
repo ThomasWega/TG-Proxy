@@ -1,4 +1,4 @@
-package net.trustgames.proxy.managers;
+package net.trustgames.proxy.config;
 
 import net.trustgames.proxy.Proxy;
 import net.trustgames.toolkit.managers.file.FileLoader;
@@ -17,7 +17,7 @@ public class ConfigManager {
      * @param configName Name of the desired file
      * @return new ConfigurationNode
      */
-    public static ConfigurationNode loadConfig(final File directory, String configName) {
+    public static ConfigurationNode getConfig(final File directory, String configName) {
         try {
             // creates the file if not existent
             File file = FileLoader.loadFile(Proxy.class.getClassLoader(), directory, configName);

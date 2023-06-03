@@ -18,7 +18,7 @@ import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.chat.cooldowns.CommandsLimiter;
 import net.trustgames.proxy.chat.filter.ChatFilter;
-import net.trustgames.proxy.managers.ConfigManager;
+import net.trustgames.proxy.config.ConfigManager;
 import net.trustgames.proxy.player.activity.PlayerActivityHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
@@ -115,7 +115,7 @@ public class Proxy {
     }
 
     private void initializeHikari() {
-        ConfigurationNode hikariConfig = ConfigManager.loadConfig(dataFolder, "mariadb.yml");
+        ConfigurationNode hikariConfig = ConfigManager.getConfig(dataFolder, "mariadb.yml");
 
         if (!hikariConfig.getNode("mariadb", "enable").getBoolean()) {
             LOGGER.warning("HikariCP is disabled");
@@ -146,7 +146,7 @@ public class Proxy {
     }
 
     private void initializeRabbit() {
-        ConfigurationNode rabbitConfig = ConfigManager.loadConfig(dataFolder, "rabbitmq.yml");
+        ConfigurationNode rabbitConfig = ConfigManager.getConfig(dataFolder, "rabbitmq.yml");
 
         if (!rabbitConfig.getNode("rabbitmq", "enable").getBoolean()) {
             LOGGER.warning("RabbitMQ is disabled");
@@ -168,7 +168,7 @@ public class Proxy {
     }
 
     private void initializeRedis() {
-        ConfigurationNode redisConfig = ConfigManager.loadConfig(dataFolder, "redis.yml");
+        ConfigurationNode redisConfig = ConfigManager.getConfig(dataFolder, "redis.yml");
         if (!redisConfig.getNode("redis", "enable").getBoolean()) {
             LOGGER.warning("Redis is disabled");
             return;
