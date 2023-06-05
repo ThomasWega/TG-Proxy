@@ -54,8 +54,8 @@ public final class CommandsLimiter {
              if "i" is more than the config value number.
              Meaning the player typed a command in the last second more than the allowed count.
             */
-            if (i >= CommandConfig.MAX_PER_SEC.getDouble()) {
-                player.sendMessage(CommandConfig.COMMAND_SPAM.getText());
+            if (i >= Config.MAX_PER_SEC.value) {
+                player.sendMessage(CommandConfig.COMMAND_SPAM.getFormatted());
                 event.setResult(CommandExecuteEvent.CommandResult.denied());
             }
             // add i + 1 to increase the amount of times the player has typed a command in the last second
@@ -73,6 +73,17 @@ public final class CommandsLimiter {
     @Subscribe(order = PostOrder.LATE)
     private void onPlayerQuit(DisconnectEvent event) {
         commandCooldown.remove(event.getPlayer().getUniqueId());
+    }
+
+
+    private enum Config {
+        MAX_PER_SEC(5d);
+
+        private final double value;
+
+        Config(double value) {
+            this.value = value;
+        }
     }
 }
 
