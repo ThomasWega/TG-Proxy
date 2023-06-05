@@ -96,7 +96,6 @@ public class ChatFilter {
         boolean foundAd = false;
         for (Pattern p : adsRegexes) {
             if (p.matcher(message.toLowerCase()).find()) {
-                System.out.println("FOUND?");
                 foundAd = true;
                 break;
             }

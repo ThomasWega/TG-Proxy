@@ -50,17 +50,13 @@ public enum PlayerDataCommandsMessagesConfig {
         public static PlayerDataCommandsMessagesConfig.Personal getByDataType(PlayerDataType dataType) {
             for (Personal config : values()) {
                 if (config.getDataType() == dataType) {
-                    System.out.println("OKA GOOD");
                     return config;
                 }
             }
-            System.out.println("BAD :(");
             return null;
         }
 
         public Component formatMessage(@NotNull Player sender, int value) {
-            System.out.println("SENDER - " + value);
-            System.out.println("SO WTF?");
             // convert seconds to hours
             if (dataType == PlayerDataType.PLAYTIME) {
                 value = (value / 3600);
@@ -70,7 +66,6 @@ public enum PlayerDataCommandsMessagesConfig {
                     .resolver(Placeholder.unparsed("value", String.valueOf(value)))
                     .build();
 
-            System.out.println("BUILD HIH3");
             return MiniMessage.miniMessage().deserialize(message, tags);
         }
     }
@@ -105,7 +100,6 @@ public enum PlayerDataCommandsMessagesConfig {
 
         public Component formatMessage(@NotNull Toolkit toolkit,
                                        @NotNull String targetName, int value) {
-            System.out.println("TARGET - " + value);
             TagResolver.Builder builder = TagResolver.builder()
                     .resolver(Placeholder.unparsed("target_name", targetName))
                     .resolver(Placeholder.unparsed("value", String.valueOf(value)));

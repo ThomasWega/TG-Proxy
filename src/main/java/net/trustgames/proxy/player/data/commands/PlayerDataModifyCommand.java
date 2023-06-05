@@ -120,9 +120,6 @@ public class PlayerDataModifyCommand {
                         ActionType actionType,
                         int value,
                         boolean silent) {
-        System.out.println("FIRST FETCH");
-        System.out.println("BEFORE UUID");
-
         PlayerDataFetcher dataFetcher = new PlayerDataFetcher(toolkit);
         switch (actionType) {
             case SET -> {

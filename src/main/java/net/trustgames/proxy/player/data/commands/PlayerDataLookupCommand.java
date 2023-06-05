@@ -81,15 +81,12 @@ public class PlayerDataLookupCommand {
                 .handler(context -> {
                     Player player = ((Player) context.getSender());
 
-                    System.out.println("HEMEME");
                     new PlayerDataFetcher(toolkit).resolveDataAsync(player.getUniqueId(), dataType).thenAccept(optData -> {
-                        System.out.println("LOL - " + optData);
                         if (optData.isEmpty()) {
                             player.sendMessage(CommandConfig.COMMAND_NO_DATA_PLAYER.addComponent(Component.text(player.getUsername())));
                             return;
                         }
 
-                        System.out.println("OBJC - " + optData.get());
                         player.sendMessage(Objects.requireNonNull(PlayerDataCommandsMessagesConfig.Personal.getByDataType(dataType)).formatMessage(player, Integer.parseInt(optData.get().toString())));
                     });
                 }));
@@ -119,11 +116,8 @@ public class PlayerDataLookupCommand {
                     CommandSource source = context.getSender();
                     String targetName = context.get(targetArg);
 
-                    System.out.println("SO LIKE HUUUH???");
                     PlayerDataFetcher dataFetcher = new PlayerDataFetcher(toolkit);
-                    System.out.println("BEFORE ALL");
                     dataFetcher.resolveDataAsync(targetName, dataType).thenAccept(optData -> {
-                        System.out.println("OPTIK DATA - " + optData);
                         if (optData.isEmpty()) {
                             source.sendMessage(CommandConfig.COMMAND_NO_DATA_PLAYER.addComponent(Component.text(targetName)));
                             return;
