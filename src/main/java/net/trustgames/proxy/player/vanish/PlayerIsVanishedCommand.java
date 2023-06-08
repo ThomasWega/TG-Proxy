@@ -49,7 +49,7 @@ public class PlayerIsVanishedCommand {
                     boolean isVanished = vanishFetcher.isVanished(player.getUniqueId());
 
                     if (!isVanished) {
-                        player.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_SELF_OFF.getFormatted(playerName));
+                        player.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_SELF_OFF.getFormatted(player, playerName));
                         return;
                     }
 
@@ -57,7 +57,7 @@ public class PlayerIsVanishedCommand {
                     // time should always be present, however if for some reason it isn't, the current time will be used
                     Timestamp timestamp = optTimestamp.orElse(Timestamp.from(Instant.now()));
 
-                    player.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_SELF_ON.getFormattedWithDate(playerName, timestamp));
+                    player.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_SELF_ON.getFormattedWithDate(player, playerName, timestamp));
                 })
         );
     }
@@ -80,7 +80,7 @@ public class PlayerIsVanishedCommand {
                     boolean isTargetVanished = vanishFetcher.isVanished(targetName);
 
                     if (!isTargetVanished) {
-                        sender.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_TARGET_OFF.getFormatted(targetName));
+                        sender.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_TARGET_OFF.getFormatted(sender, targetName));
                         return;
                     }
 
@@ -88,7 +88,7 @@ public class PlayerIsVanishedCommand {
                     // time should always be present, however if for some reason it isn't, the current time will be used
                     Timestamp timestamp = optTimestamp.orElse(Timestamp.from(Instant.now()));
 
-                    sender.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_TARGET_ON.getFormattedWithDate(targetName, timestamp));
+                    sender.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_TARGET_ON.getFormattedWithDate(sender, targetName, timestamp));
                 })
         );
     }
