@@ -25,10 +25,13 @@ import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerUptimeCommand;
 import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
+import net.trustgames.proxy.player.vanish.PlayerIsVanishedCommand;
+import net.trustgames.proxy.player.vanish.PlayerVanishCommand;
 import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.HikariManager;
 import net.trustgames.toolkit.database.player.data.PlayerDataDB;
+import net.trustgames.toolkit.database.player.vanish.PlayerVanishDB;
 import net.trustgames.toolkit.message_queue.RabbitManager;
 import net.trustgames.toolkit.placeholders.PlaceholderManager;
 import ninja.leaping.configurate.ConfigurationNode;
@@ -114,6 +117,8 @@ public class Proxy {
         new ChatLimiter(this);
         new ChatFilter(this);
         new CommandsLimiter(this);
+        new PlayerVanishCommand(this);
+        new PlayerIsVanishedCommand(this);
     }
 
     private void initializeHikari() {
@@ -138,7 +143,10 @@ public class Proxy {
             throw new RuntimeException("HikariManager wasn't initialized");
         }
 
-        hikariManager.onDataSourceInitialized(() -> new PlayerDataDB(hikariManager));
+        hikariManager.onDataSourceInitialized(() -> {
+            new PlayerDataDB(hikariManager);
+            new PlayerVanishDB(hikariManager);
+        });
 
         LOGGER.info("HikariCP is enabled");
 
