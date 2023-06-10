@@ -32,7 +32,11 @@ import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.HikariManager;
 import net.trustgames.toolkit.database.player.data.PlayerDataDB;
 import net.trustgames.toolkit.database.player.vanish.PlayerVanishDB;
+import net.trustgames.toolkit.event.EventBus;
 import net.trustgames.toolkit.message_queue.RabbitManager;
+import net.trustgames.toolkit.message_queue.event.RabbitEvent;
+import net.trustgames.toolkit.message_queue.event.RabbitEventBus;
+import net.trustgames.toolkit.message_queue.event.RabbitEventManager;
 import net.trustgames.toolkit.placeholders.PlaceholderManager;
 import ninja.leaping.configurate.ConfigurationNode;
 import redis.clients.jedis.JedisPool;
@@ -68,6 +72,12 @@ public class Proxy {
     @Getter
     private VelocityCommandManager<CommandSource> commandManager;
 
+    @Getter
+    private RabbitEventManager rabbitEventManager;
+
+    @Getter
+    private RabbitEventBus<RabbitEvent> rabbitEventBus;
+
     @Inject
     public Proxy(Logger logger, ProxyServer server, @DataDirectory Path dataDir) {
         LOGGER = logger;
@@ -85,6 +95,8 @@ public class Proxy {
 
             registerCommands();
             registerEvents();
+            registerRabbitEvents();
+
             new AnnounceHandler(this);
         });
     }
@@ -119,6 +131,10 @@ public class Proxy {
         new CommandsLimiter(this);
         new PlayerVanishCommand(this);
         new PlayerIsVanishedCommand(this);
+    }
+
+    private void registerRabbitEvents(){
+        this.rabbitEventBus = EventBus.rabbitEventBus(rabbitEventManager, RabbitEvent.class);
     }
 
     private void initializeHikari() {
@@ -167,10 +183,13 @@ public class Proxy {
                 rabbitConfig.getNode("rabbitmq", "port").getInt())
         );
 
-        if (toolkit.getRabbitManager() == null) {
+        RabbitManager rabbitManager = toolkit.getRabbitManager();
+        if (rabbitManager == null) {
             throw new RuntimeException("RabbitManager wasn't initialized");
         }
 
+        this.rabbitEventManager = new RabbitEventManager(rabbitManager.getChannel());
+        toolkit.setRabbitEventManager(rabbitEventManager);
         LOGGER.info("RabbitMQ is enabled");
     }
 
