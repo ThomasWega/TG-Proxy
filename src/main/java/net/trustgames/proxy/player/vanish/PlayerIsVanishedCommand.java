@@ -77,17 +77,14 @@ public class PlayerIsVanishedCommand {
                 .handler(context -> {
                     CommandSource sender = context.getSender();
                     String targetName = context.get(targetArg);
-                    boolean isTargetVanished = vanishFetcher.isVanished(targetName);
 
-                    if (!isTargetVanished) {
+                    Optional<Timestamp> optTimestamp = vanishFetcher.resolveVanishTime(targetName);
+                    if (optTimestamp.isEmpty()) {
                         sender.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_TARGET_OFF.getFormatted(sender, targetName));
                         return;
                     }
 
-                    Optional<Timestamp> optTimestamp = vanishFetcher.resolveVanishTime(targetName);
-                    // time should always be present, however if for some reason it isn't, the current time will be used
                     Timestamp timestamp = optTimestamp.orElse(Timestamp.from(Instant.now()));
-
                     sender.sendMessage(PlayerVanishCommandsMessagesConfig.VANISH_CHECK_TARGET_ON.getFormattedWithDate(sender, targetName, timestamp));
                 })
         );
