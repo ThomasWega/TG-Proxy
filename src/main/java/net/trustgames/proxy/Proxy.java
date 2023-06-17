@@ -25,8 +25,6 @@ import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerUptimeCommand;
 import net.trustgames.proxy.player.data.handler.PlayerDataNameHandler;
 import net.trustgames.proxy.player.data.handler.PlayerDataPlaytimeHandler;
-import net.trustgames.proxy.player.vanish.PlayerIsVanishedCommand;
-import net.trustgames.proxy.player.vanish.PlayerVanishCommand;
 import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.HikariManager;
@@ -129,8 +127,6 @@ public class Proxy {
         new ChatLimiter(this);
         new ChatFilter(this);
         new CommandsLimiter(this);
-        new PlayerVanishCommand(this);
-        new PlayerIsVanishedCommand(this);
     }
 
     private void registerRabbitEvents(){
