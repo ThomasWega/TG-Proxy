@@ -20,6 +20,7 @@ import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.chat.cooldowns.CommandsLimiter;
 import net.trustgames.proxy.chat.filter.ChatFilter;
 import net.trustgames.proxy.config.ConfigManager;
+import net.trustgames.proxy.player.data.PlayerUptimeRewardHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
 import net.trustgames.proxy.player.data.commands.PlayerDataModifyCommand;
 import net.trustgames.proxy.player.data.commands.PlayerUptimeCommand;
@@ -127,6 +128,7 @@ public class Proxy {
         new ChatLimiter(this);
         new ChatFilter(this);
         new CommandsLimiter(this);
+        new PlayerUptimeRewardHandler(this);
     }
 
     private void registerRabbitEvents(){
