@@ -30,7 +30,6 @@ import net.trustgames.proxy.tablist.TablistDecorationHandler;
 import net.trustgames.toolkit.Toolkit;
 import net.trustgames.toolkit.database.HikariManager;
 import net.trustgames.toolkit.database.player.data.PlayerDataDB;
-import net.trustgames.toolkit.database.player.vanish.PlayerVanishDB;
 import net.trustgames.toolkit.event.EventBus;
 import net.trustgames.toolkit.message_queue.RabbitManager;
 import net.trustgames.toolkit.message_queue.event.RabbitEvent;
@@ -159,7 +158,6 @@ public class Proxy {
 
         hikariManager.onDataSourceInitialized(() -> {
             new PlayerDataDB(hikariManager);
-            new PlayerVanishDB(hikariManager);
         });
 
         LOGGER.info("HikariCP is enabled");
