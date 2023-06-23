@@ -5,6 +5,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    id ("com.github.johnrengelman.shadow") version "8.1.1"
     id("io.freefair.lombok") version "8.0.1"
 }
 
@@ -35,6 +36,7 @@ dependencies {
     api("cloud.commandframework:cloud-velocity:1.8.3")
     api("cloud.commandframework:cloud-minecraft-extras:1.8.3")
     compileOnly("com.velocitypowered:velocity-api:3.2.0-SNAPSHOT")
+    annotationProcessor("com.velocitypowered:velocity-api:3.2.0-SNAPSHOT")
     compileOnly("net.luckperms:api:5.4")
     compileOnly("io.github.miniplaceholders:miniplaceholders-api:2.1.0")
 }
@@ -72,4 +74,13 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Javadoc> {
     options.encoding = "UTF-8"
+}
+
+tasks {
+    shadowJar {
+        archiveClassifier.set("")
+    }
+    assemble {
+        dependsOn(shadowJar)
+    }
 }
