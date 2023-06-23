@@ -19,6 +19,7 @@ import net.trustgames.proxy.chat.commands.TextCommands;
 import net.trustgames.proxy.chat.cooldowns.ChatLimiter;
 import net.trustgames.proxy.chat.cooldowns.CommandsLimiter;
 import net.trustgames.proxy.chat.filter.ChatFilter;
+import net.trustgames.proxy.chat.staff_chat.StaffChatCommand;
 import net.trustgames.proxy.config.ConfigManager;
 import net.trustgames.proxy.player.data.PlayerUptimeRewardHandler;
 import net.trustgames.proxy.player.data.commands.PlayerDataLookupCommand;
@@ -118,6 +119,7 @@ public class Proxy {
         new PlayerDataModifyCommand(this);
         new PlayerUptimeCommand(this);
         new TextCommands(commandManager);
+        new StaffChatCommand(this);
     }
 
     private void registerEvents() {
