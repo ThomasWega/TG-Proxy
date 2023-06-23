@@ -7,6 +7,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.trustgames.toolkit.luckperms.LuckPermsManager;
+import net.trustgames.toolkit.utils.ColorUtils;
 
 import java.util.Optional;
 
@@ -23,11 +24,11 @@ public enum StaffChatMessagesConfig {
         return MiniMessage.miniMessage().deserialize(
                 this.message,
                 TagResolver.builder()
-                        .resolver(Placeholder.unparsed("source_prefix_spaced", (source instanceof Player player)
+                        .resolver(Placeholder.component("source_prefix_spaced", (source instanceof Player player)
                                 ? Optional.ofNullable(LuckPermsManager.getOnlinePlayerPrefix(player.getUniqueId()))
-                                .map(prefix -> prefix + " ")
-                                .orElse("")
-                                : "")
+                                .map(prefix -> ColorUtils.color(prefix).appendSpace())
+                                .orElse(Component.empty())
+                                : Component.empty())
                         )
                         .resolver(Placeholder.parsed("source", (source instanceof Player player)
                                 ? player.getUsername()
@@ -39,7 +40,7 @@ public enum StaffChatMessagesConfig {
                                 .orElse("unknown")
                                 : "")
                         )
-                        .resolver(Placeholder.unparsed("message", msg))
+                        .resolver(Placeholder.parsed("message", msg))
                         .build()
         );
     }
