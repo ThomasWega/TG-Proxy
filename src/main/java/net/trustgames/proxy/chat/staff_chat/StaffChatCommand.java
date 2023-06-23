@@ -7,6 +7,7 @@ import cloud.commandframework.meta.CommandMeta;
 import cloud.commandframework.meta.SimpleCommandMeta;
 import cloud.commandframework.velocity.VelocityCommandManager;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.trustgames.proxy.Proxy;
 import net.trustgames.toolkit.config.PermissionConfig;
@@ -41,7 +42,17 @@ public class StaffChatCommand {
                     server.getAllPlayers().stream()
                             .filter(player -> player.hasPermission(PermissionConfig.STAFF.getPermission()))
                             .forEach(player -> player.sendMessage(StaffChatMessagesConfig.MESSAGE.getFormatted(source, message)));
+                    logMessage(source, message);
                 })
         );
+    }
+
+    private void logMessage(CommandSource source, String message) {
+        String senderName = (source instanceof Player player) ? player.getUsername() : "CONSOLE";
+        String serverName = (source instanceof Player player) ? player.getCurrentServer()
+                .map(serverConnection -> serverConnection.getServerInfo().getName())
+                .orElse("unknown_server")
+                : "unknown_server";
+        Proxy.LOGGER.info("Staff Chat | " + senderName + " (" + serverName + ") " + message);
     }
 }
