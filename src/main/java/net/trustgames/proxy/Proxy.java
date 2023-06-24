@@ -57,7 +57,7 @@ import java.util.logging.Logger;
         dependencies = {
                 @Dependency(id = "miniplaceholders"),
                 @Dependency(id = "miniplaceholders-player-expansion"),
-                @Dependency(id = "luckperms-expansion")
+                @Dependency(id = "miniplaceholders-luckperms-expansion")
         }
 )
 public class Proxy {
